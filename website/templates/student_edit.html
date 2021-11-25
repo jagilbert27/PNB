@@ -1,0 +1,87 @@
+{% extends "base.html" %} {% block title %}Student{% endblock %} {% block
+content %}
+
+<div class="container-fluid mt-4 mb-4 p-2 bg-primary text-white rounded">
+  <h3><span style="font-weight:100">View</span>&nbsp;<span style="font-weight: 700"></span>Student</span></h3>
+</div>
+
+<form class="row g-3" disabled="disabled" method="POST">
+
+  <!-- First Name -->
+  <div class="col-md-6 form-group required">
+    <label for="first_name_group" class="col-form-label">First Name</label>
+    <div class="input-group" id=first_name_group>
+      <span class="input-group-text">
+        <i class="bi bi-person-fill"></i>
+      </span>
+      <input type="text" class="form-control" id="first_name" name="first_name" value="{{student.first_name}}" required />
+    </div>
+  </div>
+
+  <!-- Last Name -->
+  <div class="col-md-6 form-group required">
+    <label for="last_name_group" class="col-form-label">Last Name</label>
+    <div class="input-group" id=first_name_group>
+      <span class="input-group-text">
+        <i class="bi bi-person-fill"></i>
+      </span>
+      <input type="text" class="form-control" id="last_name" name="last_name" value="{{student.last_name}}" required />
+    </div>
+  </div>
+
+  <!-- Email -->
+  <div class="col-md-12 form-group required">
+    <label for="email_group" class="col-form-label">Email</label>
+    <div class="input-group" id=email_group>
+      <span class="input-group-text">
+        <i class="bi bi-person-fill"></i>
+      </span>
+      <input type="email" class="form-control" id="email" name="email" value="{{student.email}}" required />
+    </div>
+  </div>
+
+  <!-- Checkouts -->
+  <div class="col-md-12 form-group required">
+    <table id=student-table class='table table-striped'>
+      <thead id="table-head">
+        <tr>
+          <th colspan=4>Instrument Checkouts</th>
+          <th colspan=2 style="text-align:right;">New</th>
+        </tr>
+        <tr>
+          <th>Tag</th>
+          <th>Type</th>
+          <th>Out</th>
+          <th>Due</th>
+          <th>Returned</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        {% for checkout in checkouts %}
+        <tr>
+          <td>{{checkout}}</td>
+          <td>{{checkout.student_instrument_checkout_condition}} </td>
+          <!-- <td>{{checkout.checkout_date}} </td>
+          <td>{{checkout.due_date}} </td>
+          <td>{{checkout.return_date}} </td> -->
+          <td>
+            <a class="mr-2" href="{{ url_for('views.edit_student',id=student.id)}}">view</a>
+            <a class="mr-2" href="{{ url_for('views.edit_student',id=student.id)}}">edit</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+
+  Instruments Checked Out [Check out new instrument] [History]<br />
+  Tag, Long Name, checkout date, due date Overdue
+
+  Parents & Guardians [Add]
+
+  <br />
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+{% endblock %}
