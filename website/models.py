@@ -1,3 +1,4 @@
+from sqlalchemy.sql.expression import column
 from . import db
 from flask_login import UserMixin
 from sqlalchemy.sql import func
@@ -32,20 +33,29 @@ class Student(db.Model):
 class Instrument(db.Model):
     __tablename__ = 'instruments'
     id       = db.Column(db.Integer, primary_key=True)
+    type_id  = db.Column(db.Integer, db.ForeignKey('instrument_types.id'))
+    type     = relationship("InstrumentType", back_populates="instruments")
     students = relationship("StudentInstrument",back_populates="instrument")
     tag      = db.Column(db.String(150))
     serial   = db.Column(db.String(150))
-    type     = db.Column(db.String(150))
     size     = db.Column(db.String(150))
     brand    = db.Column(db.String(150))
+
+
+class InstrumentType(db.Model):
+    __tablename__ = 'instrument_types'
+    id       = db.Column(db.Integer, primary_key=True)
+    instruments = relationship(Instrument, back_populates='type')
+    name     = db.Column(db.String(20))
+
 
 class StudentInstrument(db.Model):
     __tablename__ = 'students_instruments'
     student_id = db.Column(db.ForeignKey('students.id'),primary_key=True)
     instrument_id = db.Column(db.ForeignKey('instruments.id'),primary_key=True)
+    checkout_date = db.Column(db.Date,primary_key=True)
     student=relationship("Student",back_populates="instruments")
     instrument=relationship("Instrument",back_populates="students")
-    checkout_date = db.Column(db.Date,primary_key=True)
     checkout_condition = db.Column(db.Integer)
     due_date = db.Column(db.Date)
     return_date = db.Column(db.Date)
@@ -53,3 +63,4 @@ class StudentInstrument(db.Model):
     return_location = db.Column(db.String(100))
     notes = db.Column(db.String(1000))
  
+

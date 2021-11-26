@@ -1,11 +1,39 @@
 from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for
 from flask_login import login_required, current_user
-from .models import Note, Student, Instrument, StudentInstrument
+from .models import Note, Student, Instrument, StudentInstrument, InstrumentType
 from . import db
 import json
 import sqlalchemy
+import datetime
 
 views = Blueprint('views', __name__)
+
+@views.route('/Fill', methods=['GET', 'POST'])
+@login_required
+def fill():
+    # Clear
+    StudentInstrument.query.delete()
+    Instrument.query.delete()
+    Student.query.delete()
+    InstrumentType.query.delete()
+    db.session.commit()
+    flash('DB Cleared')
+
+    db.session.add(InstrumentType(name='Fiddle'))
+    db.session.add(InstrumentType(name='Guitar'))
+    db.session.commit()
+    db.session.add(Instrument(type_id=1, tag='F1'))
+    db.session.add(Instrument(type_id=2, tag='G1'))
+    db.session.add(Student(email='a@a.com',first_name='Alpha',last_name='A'))
+    db.session.add(Student(email='b@b.com',first_name='Bravo',last_name='B'))
+    db.session.add(Student(email='c@c.com',first_name='Charlie',last_name='C'))
+    db.session.commit()
+    db.session.add(StudentInstrument(student_id=1, instrument_id=1, checkout_date=datetime.datetime(2021,11,1)))
+    db.session.add(StudentInstrument(student_id=1, instrument_id=2, checkout_date=datetime.datetime(2021,11,1)))
+    db.session.add(StudentInstrument(student_id=2, instrument_id=1, checkout_date=datetime.datetime(2021,11,1)))
+    db.session.commit()
+    flash('DB initialized with test data')
+    return redirect(url_for('views.home'))
 
 
 @views.route('/', methods=['GET', 'POST'])
@@ -66,10 +94,6 @@ def student_edit(id):
     if request.method == 'GET':
         return render_template("student_edit.html", student=student, user=current_user)
 
-    # checkouts =  StudentInstrument.query.all().Join(Student)
-    # checkouts = Student.query.join(Student.instruments)
-    # checkouts = db.session.query(Student).join(Instrument,Student.instruments)
-    # checkouts = db.session.query.join(Instrument)
     student.email = request.form.get('email')
     student.first_name = request.form.get('first_name')
     student.last_name = request.form.get('last_name')
@@ -92,12 +116,26 @@ def instrument_new():
 
     return render_template("instrument_new.html",user=current_user)    
 
+@views.route('/instrument/<int:id>', methods=['GET','POST'])
+@login_required
+def instrument_edit(id):
+    instrument = Instrument.query.get_or_404(id)
+    return render_template("instrument_edit.html", instrument=instrument, user=current_user)
+
 # Checkouts
 @views.route('/checkout', methods=['GET','POST'])
 @login_required
 def checkout_list():
     # checkouts = StudentInstrument.query.all()
     # students = Student.query.join(StudentInstrument).join(Instrument).all()
-    students = Student.query(Student.id, Student.first_name).join(StudentInstrument).query(StudentInstrument.checkout_date).join(Instrument).query(Instrument.type).all()
+    students = Student.query.all()
+
+    msg = "Student structure:<br/><br/>"
+    for student in students:
+        msg += f'Student.first_name: {student.first_name} <br/>'
+        for checkout in student.instruments:
+            msg += f'    Checkout Date {checkout.checkout_date.strftime("%m/%d/%Y")} <br/>'
+            msg += f'        Type: {checkout.instrument.type} <br/><br/>'
+    # return msg
 
     return render_template("checkout_list.html",students=students, user=current_user)    

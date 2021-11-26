@@ -1,0 +1,97 @@
+{% extends "base.html" %} {% block title %}Instrument{% endblock %} {% block content %}
+
+<style>
+  .form-group.required .col-form-label:after {
+    content:"*";
+    color:red;
+  }
+  </style>
+
+<div class="container-fluid mt-4 mb-4 p-2 bg-primary text-white rounded">
+  <h3><span style="font-weight:100">New</span>&nbsp;<span style="font-weight: 700"></span>Instrument</span></h3>
+</div>
+
+<form class="row g-3" method="POST">
+
+  <!-- Tag -->
+  <div class="col-md-3 form-group required">
+    <label for="tag" class="col-form-label">Tag Number</label>
+    <div class="input-group">
+      <span class="input-group-text">
+        <i class="bi bi-person-fill"></i>
+      </span>
+      <input type="text" class="form-control" id="tag" name="tag" value="{{ instrument.tag }}" placeholder="G01" />
+    </div>
+  </div>
+
+  <!-- Serial Number -->
+  <div class="col-md-3 form-group">
+    <label for="serial" class="col-form-label">Serial Number</label>
+    <div class="input-group">
+      <span class="input-group-text">
+        <i class="bi bi-person-fill"></i>
+      </span>
+      <input type="text" class="form-control" id="serial" name="serial" value="{{ instrument.serial }}" />
+    </div>
+  </div>
+
+  <!-- Type -->
+  <div class="col-md-3 form-group required">
+    <label for="type" class="col-form-label">Instrument Type</label>
+    <div class="input-group">
+      <span class="input-group-text">
+        <i class="bi bi-person-fill"></i>
+      </span>
+      <select class="form-control" name=type id=type >
+        <option value="fiddle">Fiddle</option>
+        <option value="acoustic_guitar">Acoustic Guitar</option>
+        <option value="electric_guitar">Electric Guitar</option>
+        <option value="electric_bass_guitar">Bass Guitar</option>
+        <option value="mandolin">Mandolin</option>
+        <option value="banjo">Audi</option>
+        <option value="standup_bass">Standup Bass</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Size -->
+  <div class="col-md-3 form-group required">
+    <label for="size" class="col-form-label">Size</label>
+    <div class="input-group">
+      <span class="input-group-text">
+        <i class="bi bi-person-fill"></i>
+      </span>
+      <select class="form-control" name=type id=type>
+        <option selected value="standard">Standard</option>
+        <option value="3_4">3/4</option>
+        <option value="1_2">1/2</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Brand -->
+  <div class="col-md-6 form-group ">
+    <label for="brand" class="col-form-label">Brand</label>
+    <div class="input-group">
+      <span class="input-group-text">
+        <i class="bi bi-person-fill"></i>
+      </span>
+      <input type="text" class="form-control" id="brand" name="brand" placeholder="Fender" />
+    </div>
+  </div>
+
+  <!-- Model -->
+  <div class="col-md-6 form-group ">
+    <label for="model" class="col-form-label">Model</label>
+    <div class="input-group">
+      <span class="input-group-text">
+        <i class="bi bi-person-fill"></i>
+      </span>
+      <input type="text" class="form-control" id="model" name="model" placeholder="Stratocaster" />
+    </div>
+  </div>
+
+  <br />
+  <button type="submit" class="btn btn-primary col-md-1">Submit</button>
+</form>
+{% endblock %}

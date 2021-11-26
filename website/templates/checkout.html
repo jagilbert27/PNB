@@ -1,0 +1,186 @@
+{% extends "base.html" %} {% block title %}Checkout Instrument{% endblock %}
+{% block content %}
+
+<style>
+.form-group.required .col-form-label:after {
+  content:"*";
+  color:red;
+}
+</style>
+
+<div class="container-fluid mt-4 mb-4 p-2 bg-primary text-white rounded">
+  <h3><span style="font-weight:100">Checkout</span>&nbsp;<span style="font-weight: 700"></span>Instrument</span></h3>
+</div>
+
+<form class="row g-3" disabled="disabled" method="POST">
+
+  <!-- Student -->
+  <div class="col-md-6 form-group required">
+    <label for="studentDataList" class="col-form-label">Student</label>
+    <div class="input-group">
+      <span class="input-group-text">
+        <i class="bi bi-person-fill"></i>
+      </span>
+      <input class="form-control" list="studentDatalistOptions" id="student_id" name="student_id"
+        placeholder="Type to search..." required>
+    </div>
+    <datalist id="studentDatalistOptions">
+      {% for student in students %}
+      <option data-value="{{student.first_name}} {{student.last_name}}">{{student.id}}</option>
+      {% endfor %}
+    </datalist>
+    <input type="text" name="answer" id="answerInput-hidden">
+  </div>
+
+    <!-- Student -->
+    <div class="col-md-6 form-group required">
+      <label for="studentDataList" class="col-form-label">Student</label>
+      <div class="input-group">
+        <span class="input-group-text">
+          <i class="bi bi-person-fill"></i>
+        </span>
+        <select name=student_id id=student_id>
+          {% for student in students %}
+          <option value="{{student.id}}">{{student.first_name}} {{student.last_name}}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+  <!-- Instrument -->
+  <!-- <div class="col-md-6 form-group required">
+    <label for="instrumentDataList" class="col-form-label">Instrument</label>
+    <div class="input-group">
+      <span class="input-group-text">
+        <i class="bi bi-file-music-fill"></i>
+      </span>
+    <input class="form-control" list="instrumentDatalistOptions" id="instrument_id" name="instrument_id" placeholder="Type to search..." required>
+    </div>
+    <datalist id="instrumentDatalistOptions">
+      {% for instrument in instruments %}
+      <option data-value="{{instrument.id}}">{{instrument.tag}} {{instrument.size}} {{instrument.type}}</option>
+      {% endfor %}
+    </datalist>
+  </div> -->
+
+
+    <!-- Instrument -->
+    <div class="col-md-6 form-group required">
+      <label for="instrument_id" class="col-form-label">Instrument</label>
+      <div class="input-group">
+        <span class="input-group-text">
+          <i class="bi bi-file-music-fill"></i>
+        </span>
+        <select name=instrument_id id=instrument_id>
+          {% for instrument in instruments %}
+          <option value="{{instrument.id}}">{{instrument.tag}} {{instrument.size}} {{instrument.type}}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+
+  <!-- Checkout Date -->
+  <!-- https://bootstrap-datepicker.readthedocs.io/en/latest -->
+  <div class="col-md-4 form-group required">
+    <label for="checkout_date" class="col-form-label">Checkout Date</label>
+    <div class="input-group date">
+      <input type="text" class="form-control" name="checkout_date" required>
+      <span class="input-group-append">
+        <span class="input-group-text">
+          <i class="bi bi-calendar3"></i>
+        </span>
+      </span>
+    </div>
+  </div>
+
+  <!-- Checkout Condition -->
+  <div class="col-md-4 form-group required">
+    <label for="checkout_condition" class="col-form-label">Checkout Condition</label>
+    <select class="form-select" id=checkout_condition name="checkout_condition">
+      <option data-value=1>New</option>
+      <option data-value=2>Serviceable</option>
+      <option data-value="needs repair">Needs Repair</option>
+    </select>
+  </div>
+
+  <!-- Due Date -->
+  <div class="col-md-4 form-group required">
+    <label for="due_date" class="col-form-label">Due Date</label>
+    <div class="input-group date">
+      <input type="text" class="form-control" name="due_date" required>
+      <span class="input-group-append">
+        <span class="input-group-text">
+          <i class="bi bi-calendar3"></i>
+        </span>
+      </span>
+    </div>
+  </div>
+
+  <!-- Return Date -->
+  <div class="col-md-4 form-group">
+    <label for="return_date" class="col-form-label">Return Date</label>
+    <div class="input-group date">
+      <input type="text" class="form-control" name="return_date">
+      <span class="input-group-append">
+        <span class="input-group-text">
+          <i class="bi bi-calendar3"></i>
+        </span>
+      </span>
+    </div>
+  </div>
+
+  <!-- Return Condition -->
+  <div class="col-md-4 form-group required">
+    <label for="return_condition" class="col-form-label">Return Condition</label>
+    <select class="form-select" id=return_condition name="return_condition">
+      <option data-value="new">New</option>
+      <option data-value="serviceable">Serviceable</option>
+      <option data-value="needs repair">Needs Repair</option>
+    </select>
+  </div>
+
+  <!-- Return Location -->
+  <div class="col-md-4">
+    <label for="returnLocation" class="col-form-label">Return Location</label>
+    <input type="text" class="form-control" id="returnLocation" name="return_location" placeholder="Location">
+  </div>
+
+  <!-- Notes -->
+  <div class="col-md-12">
+    <label for="notes" class="form-label">Notes</label>
+    <input type="text" class="form-control" id="notes" name="notes" placeholder="Location">
+  </div>
+
+  <div class="col-12">
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </div>
+</form>
+
+<script type="text/javascript">
+  $(function () {
+    $('.date').datepicker({
+      todayBtn: "linked",
+      clearBtn: true,
+      autoclose: true
+    });
+  });
+</script>
+
+
+<h3>ToDo:</h3>
+<ul>
+  <li>☑ create form fields</li>
+  <li>☑ Tweak vertical alignment</li>
+  <li>☑ Add 'today' button on calendars</li>
+  <li>☑ support Create</li>
+  <li>☑ make required fields</li>
+
+  <li>☐ support Read/Update</li>
+  <li>☐ support Delete</li>
+
+  <li>☐ Add 'new' button on student?</li>
+  <li>☐ Add 'new' button on instrument?</li>
+</ul>
+
+{% endblock %}

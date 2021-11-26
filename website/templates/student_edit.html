@@ -49,39 +49,42 @@ content %}
           <th colspan=2 style="text-align:right;">New</th>
         </tr>
         <tr>
+          <th>Checked Out</th>
           <th>Tag</th>
           <th>Type</th>
-          <th>Out</th>
+          <th>Out Condition</th>
           <th>Due</th>
           <th>Returned</th>
-          <th>Actions</th>
+          <th>Due</th>
+          <th>In Condition</th>
+          <th>Returned To</th>
+          <th>Notes</th>
+          <th>?</th>
+
         </tr>
       </thead>
       <tbody id="table-body">
-        {% for checkout in checkouts %}
+        {% for checkout in student.instruments %}
         <tr>
-          <td>{{checkout}}</td>
-          <td>{{checkout.student_instrument_checkout_condition}} </td>
-          <!-- <td>{{checkout.checkout_date}} </td>
-          <td>{{checkout.due_date}} </td>
-          <td>{{checkout.return_date}} </td> -->
-          <td>
-            <a class="mr-2" href="{{ url_for('views.edit_student',id=student.id)}}">view</a>
-            <a class="mr-2" href="{{ url_for('views.edit_student',id=student.id)}}">edit</a>
-          </td>
+          <td>{{ checkout.checkout_date }}</td>
+          <td><b><a style="text-decoration-line:none" href="{{ url_for('views.instrument_edit', id=checkout.instrument.id)}}">{{ checkout.instrument.tag }}</a></b></td>
+          <td>{{ checkout.instrument.type.name }}</a></td>
+          <td>{{ checkout.checkout_condition }}</td>
+          <td>{{ checkout.due_date }}</td>
+          <td>{{ checkout.return_date }}</td>
+          <td>{{ checkout.return_condition }}</td>
+          <td>{{ checkout.return_location }}</td>
+          <td>{{ checkout.Notes }}</td>
+          <td><b><a style="text-decoration-line:none" href="{{ url_for('views.checkout_list')}}">Return</a></b></td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 
-
-  Instruments Checked Out [Check out new instrument] [History]<br />
-  Tag, Long Name, checkout date, due date Overdue
-
-  Parents & Guardians [Add]
-
   <br />
-  <button type="submit" class="btn btn-primary">Submit</button>
+  <div class="col-md-2 form-group ">
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </div>
 </form>
 {% endblock %}
