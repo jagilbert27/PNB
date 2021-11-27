@@ -11,16 +11,18 @@ views = Blueprint('views', __name__)
 @views.route('/Fill', methods=['GET', 'POST'])
 @login_required
 def fill():
-    # Clear
     StudentInstrument.query.delete()
     Instrument.query.delete()
     Student.query.delete()
     InstrumentType.query.delete()
     db.session.commit()
     flash('DB Cleared')
-
     db.session.add(InstrumentType(name='Fiddle'))
     db.session.add(InstrumentType(name='Guitar'))
+    db.session.add(InstrumentType(name='Mandolin'))
+    db.session.add(InstrumentType(name='Banjo'))
+    db.session.add(InstrumentType(name='Bass'))
+    db.session.add(InstrumentType(name='Ukulele'))
     db.session.commit()
     db.session.add(Instrument(type_id=1, tag='F1'))
     db.session.add(Instrument(type_id=2, tag='G1'))
@@ -66,55 +68,98 @@ def delete_note():
     return jsonify({})
 
 
-# Student
+# student   list
+# student/edit/id  = edit
+# student/view/id  = view
+# student/new
+
+
+# Student List
+@views.route('/students', methods=['GET'])
+@login_required
+def student_list():
+    students = Student.query.all()
+    return render_template("student_list.html", students=students, user=current_user)
+
+
 @views.route('/student/new', methods=['GET','POST'])
 @login_required
 def student_new():
+    if request.method == 'GET':
+        return render_template("student_edit.html", student=Student(), user=current_user)
+
     if request.method == 'POST':
         try:
             student = Student(
+                first_name = request.form.get('first_name'),
+                last_name = request.form.get('last_name'),
                 email = request.form.get('email'),
-                first_name = request.form.get('firstName'),
-                last_name = request.form.get('lastName')
                 )
             db.session.add(student)
             db.session.commit()
             flash('Student Added!', category='success')
-            return redirect(url_for('views.student',id=student.id, user=current_user))
+            return redirect(url_for('views.student_list'))
         except sqlalchemy.exc.IntegrityError as ex:
             db.session.rollback()
             flash(f'Save Failed {type(ex)}', category='error')
-    return render_template("student_edit.html",student=student, user=current_user)
 
 
-@views.route('/student/<int:id>', methods=['GET','POST'])
+@views.route('/student/edit/<int:id>', methods=['GET','POST'])
 @login_required
 def student_edit(id):
     student = Student.query.get_or_404(id)
     if request.method == 'GET':
         return render_template("student_edit.html", student=student, user=current_user)
+    
+    if request.method == 'POST':
+        student.email = request.form.get('email')
+        student.first_name = request.form.get('first_name')
+        student.last_name = request.form.get('last_name')
+        db.session.commit()
+        flash('Student Updated!', category='success')
+        return redirect(url_for('views.student_list'))
 
-    student.email = request.form.get('email')
-    student.first_name = request.form.get('first_name')
-    student.last_name = request.form.get('last_name')
-    db.session.commit()
-    flash('Student Updated!', category='success')
-    return redirect(url_for('views.student_edit',id=student.id, user=current_user))
+
+@views.route('/student/view/<int:id>', methods=['GET'])
+@login_required
+def student_view(id):
+    student = Student.query.get_or_404(id)
+    if request.method == 'GET':
+        return render_template("student_view.html", student=student, user=current_user)
+
+@views.route('/delete-student', methods=['POST'])
+def student_delete():
+    request_data = json.loads(request.data)
+    student_id = request_data['student_id']
+    student= Student.query.get(student_id)
+    success_msg = f'Deleted {student.first_name} {student.last_name}'
+    if student:
+        try:
+            db.session.delete(student)
+            db.session.commit()
+            flash(success_msg, category='success')
+        except BaseException as ex:
+            db.session.rollback()
+            flash(f'Delete Failed {type(ex)}', category='error')
+
+    return jsonify({})
+
 
 @views.route('/instrument/new', methods=['GET','POST'])
 @login_required
 def instrument_new():
     instrument = Instrument()
     if request.method == 'POST':
-        instrument.type = request.form['type']
-        # instrument.size = request.form['size']
+        # instrument.type_id = request.form['instrument_type']
+        instrument.size = request.form.get('size')
         instrument.brand = request.form.get('brand')
         db.session.add(instrument)
         db.session.commit()
         flash('Instrument Added!', category='success')
-        return redirect(url_for('views.instrument',id=instrument.id, user=current_user))
+        return redirect(url_for('views.home'))
 
-    return render_template("instrument_new.html",user=current_user)    
+    instrument_types = InstrumentType.query.all()
+    return render_template("instrument_new.html",instrument_types = instrument_types, user=current_user)    
 
 @views.route('/instrument/<int:id>', methods=['GET','POST'])
 @login_required

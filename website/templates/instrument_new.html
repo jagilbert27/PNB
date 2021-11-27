@@ -37,19 +37,15 @@
 
   <!-- Type -->
   <div class="col-md-3 form-group required">
-    <label for="type" class="col-form-label">Instrument Type</label>
+    <label for="instrument_type" class="col-form-label">Instrument Type</label>
     <div class="input-group">
       <span class="input-group-text">
         <i class="bi bi-person-fill"></i>
       </span>
-      <select class="form-control" name=type id=type>
-        <option value="fiddle">Fiddle</option>
-        <option value="acoustic_guitar">Acoustic Guitar</option>
-        <option value="electric_guitar">Electric Guitar</option>
-        <option value="electric_bass_guitar">Bass Guitar</option>
-        <option value="mandolin">Mandolin</option>
-        <option value="banjo">Audi</option>
-        <option value="standup_bass">Standup Bass</option>
+      <select class="form-control" name=instrument_type id=instrument_type>
+        {% for type in instrument_types %}
+        <option value="{{type.id}}">{{type.name}}</option>
+        {% endfor %}
       </select>
     </div>
   </div>

@@ -1,0 +1,74 @@
+{% extends "base.html" %} {% block title %}Student{% endblock %} {% block
+content %}
+<div class="container-fluid mt-4 mb-4 p-2 bg-primary text-white rounded">
+  <div class='text-start'>
+    <h3><span style="font-weight:100">View</span>&nbsp;<span style="font-weight: 700"></span>Student</span></h3>
+  </div>
+  <div class="text-end">
+
+    <a href="{{ url_for('views.student_edit',id=student.id)}}" type="button" class="btn btn-outline-warning">
+      <span aria-hidden="true"><i class="bi bi-pencil"></i></span>
+    </a>
+
+    <button type="button" onClick="deleteStudent({{ student.id }})" class="btn btn-outline-danger">
+      <span aria-hidden="true"><i class="bi bi-x-circle"></i></span>
+    </button>
+  </div>
+</div>
+
+<br />
+
+<div class="row g-3" method="POST">
+
+  <div class="col-md-2 form-group">Name:</div>
+  <div class="col-md-10 form-group">{{student.first_name}} {{student.last_name}}</div>
+  <div class="col-md-2 form-group">Email:</div>
+  <div class="col-md-10 form-group">{{student.email}}</div>
+
+  {% if student.instruments | length > 0%}
+  <!-- Checkouts -->
+  <div class="col-md-12 form-group required">
+    <table id=student-table class='table table-striped'>
+      <thead id="table-head">
+        <tr>
+          <th colspan=4>Instrument Checkouts</th>
+          <th colspan=2 style="text-align:right;">New</th>
+        </tr>
+        <tr>
+          <th>Checked Out</th>
+          <th>Tag</th>
+          <th>Type</th>
+          <th>Out Condition</th>
+          <th>Due</th>
+          <th>Returned</th>
+          <th>Due</th>
+          <th>In Condition</th>
+          <th>Returned To</th>
+          <th>Notes</th>
+          <th>?</th>
+
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        {% for checkout in student.instruments %}
+        <tr>
+          <td>{{ checkout.checkout_date }}</td>
+          <td><b><a style="text-decoration-line:none"
+                href="{{ url_for('views.instrument_edit', id=checkout.instrument.id)}}">{{ checkout.instrument.tag
+                }}</a></b></td>
+          <td>{{ checkout.instrument.type.name }}</a></td>
+          <td>{{ checkout.checkout_condition }}</td>
+          <td>{{ checkout.due_date }}</td>
+          <td>{{ checkout.return_date }}</td>
+          <td>{{ checkout.return_condition }}</td>
+          <td>{{ checkout.return_location }}</td>
+          <td>{{ checkout.Notes }}</td>
+          <td><b><a style="text-decoration-line:none" href="{{ url_for('views.checkout_list')}}">Return</a></b></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
