@@ -8,90 +8,126 @@
   </style>
 
 <div class="container-fluid mt-4 mb-4 p-2 bg-primary text-white rounded">
-  <h3><span style="font-weight:100">New</span>&nbsp;<span style="font-weight: 700"></span>Instrument</span></h3>
+  <h3><span style="font-weight:100">{% if instrument.id %} Edit {% else %} New {% endif %}</span>&nbsp;<span
+      style="font-weight: 700"></span>Instrument</span></h3>
 </div>
 
 <form class="row g-3" method="POST">
 
   <!-- Tag -->
-  <div class="col-md-3 form-group required">
-    <label for="tag" class="col-form-label">Tag Number</label>
-    <div class="input-group">
-      <span class="input-group-text">
-        <i class="bi bi-person-fill"></i>
-      </span>
-      <input type="text" class="form-control" id="tag" name="tag" value="{{ instrument.tag }}" placeholder="G01" />
+  <div class="col-md-4 required">
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="instrument_tag" name="instrument_tag" placeholder="Ex: F1"
+        value="{% if instrument.tag %} {{ instrument.tag }} {% endif %}">
+      <label for="instrument_tag">Tag Number</label>
     </div>
   </div>
-
-  <!-- Serial Number -->
-  <div class="col-md-3 form-group">
-    <label for="serial" class="col-form-label">Serial Number</label>
-    <div class="input-group">
-      <span class="input-group-text">
-        <i class="bi bi-person-fill"></i>
-      </span>
-      <input type="text" class="form-control" id="serial" name="serial" value="{{ instrument.serial }}" />
-    </div>
-  </div>
-
+  
   <!-- Type -->
-  <div class="col-md-3 form-group required">
-    <label for="type" class="col-form-label">Instrument Type</label>
-    <div class="input-group">
-      <span class="input-group-text">
-        <i class="bi bi-person-fill"></i>
-      </span>
-      <select class="form-control" name=type id=type >
-        <option value="fiddle">Fiddle</option>
-        <option value="acoustic_guitar">Acoustic Guitar</option>
-        <option value="electric_guitar">Electric Guitar</option>
-        <option value="electric_bass_guitar">Bass Guitar</option>
-        <option value="mandolin">Mandolin</option>
-        <option value="banjo">Audi</option>
-        <option value="standup_bass">Standup Bass</option>
+  <div class="col-md-4 required">
+    <div class="form-floating">
+      <select class="form-select" name=instrument_type id=instrument_type aria-label="Select Instrument Type">
+        <option>Select</option>
+        {% for type in instrument_types %}
+        <option {% if instrument.type_id == type.id %} selected {% endif %} value="{{type.id}}">{{type.name}}</option>
+        {% endfor %}
       </select>
+      <label for="instrument_type">Type</label>
     </div>
   </div>
 
   <!-- Size -->
-  <div class="col-md-3 form-group required">
-    <label for="size" class="col-form-label">Size</label>
-    <div class="input-group">
-      <span class="input-group-text">
-        <i class="bi bi-person-fill"></i>
-      </span>
-      <select class="form-control" name=type id=type>
-        <option selected value="standard">Standard</option>
-        <option value="3_4">3/4</option>
-        <option value="1_2">1/2</option>
+  <div class="col-md-4 required">
+    <div class="form-floating">
+      <select class="form-select" name=instrument_size id=instrument_size aria-label="Floating label select example">
+        {% for size in instrument_sizes %}
+        <option {% if instrument.size_id == size.id %} selected {% endif %} value="{{size.id}}">{{size.name}}</option>
+        {% endfor %}
       </select>
+      <label for="instrument_size">Size</label>
     </div>
   </div>
 
-  <!-- Brand -->
-  <div class="col-md-6 form-group ">
-    <label for="brand" class="col-form-label">Brand</label>
-    <div class="input-group">
-      <span class="input-group-text">
-        <i class="bi bi-person-fill"></i>
-      </span>
-      <input type="text" class="form-control" id="brand" name="brand" placeholder="Fender" />
+  <!-- Serial Number -->
+  <div class="col-md-4 required">
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="instrument_serial" name="instrument_serial" placeholder="Ex: ABC123"
+        value="{% if instrument.serial %} {{ instrument.serial }} {% endif %}">
+      <label for="instrument_serial">Serial Number</label>
     </div>
   </div>
+  
+  <!-- Brand -->
+  <div class="col-md-4 required">
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="instrument_brand" name="instrument_brand" placeholder="Ex: ABC123"
+        value="{% if instrument.brand %} {{ instrument.brand }} {% endif %}">
+      <label for="instrument_brand">Brand</label>
+    </div>
+  </div>
+
 
   <!-- Model -->
-  <div class="col-md-6 form-group ">
-    <label for="model" class="col-form-label">Model</label>
-    <div class="input-group">
-      <span class="input-group-text">
-        <i class="bi bi-person-fill"></i>
-      </span>
-      <input type="text" class="form-control" id="model" name="model" placeholder="Stratocaster" />
+  <div class="col-md-4 required">
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="instrument_model" name="instrument_model" placeholder="Ex: ABC123"
+        value="{% if instrument.model %} {{ instrument.model }} {% endif %}">
+      <label for="instrument_model">Model</label>
     </div>
   </div>
+
+
+  <!-- Condition -->
+  <div class="col-md-4 required">
+    <div class="form-floating">
+      <select class="form-select" name=instrument_condition id=instrument_condition aria-label="Floating label select example">
+        {% for condition in instrument_conditions %}
+        <option {% if instrument.condition_id == condition.id %} selected {% endif %} value="{{condition.id}}">{{condition.name}}</option>
+        {% endfor %}
+      </select>
+      <label for="instrument_condition">Instrument Condition</label>
+    </div>
+  </div>
+
+  <!-- Location -->
+  <div class="col-md-4 required">
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="instrument_location" name="instrument_location" placeholder="Ex: ABC123"
+        value="{% if instrument.location %} {{ instrument.location }} {% endif %}">
+      <label for="instrument_location">Location</label>
+    </div>
+  </div>
+
+<!-- Value -->
+  <div class="col-md-4 required">
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="instrument_value" name="instrument_value" placeholder="Ex: ABC123"
+        value="{% if instrument.value %} {{ instrument.value }} {% endif %}">
+      <label for="instrument_value">$ Est'd Value</label>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="col-md-12 required">
+    <div class="form-floating mb-3">
+      <textarea class="form-control" id="instrument_notes" name="instrument_notes" placeholder="Ex: ABC123">{% if instrument.notes %}{{ instrument.notes }}{% endif %}</textarea>
+      <label for="instrument_notes">Notes</label>
+    </div>
+  </div>
+
 
   <br />
   <button type="submit" class="btn btn-primary col-md-1">Submit</button>
 </form>
+<br/>
+<h4>ToDo</h4>
+<ul>
+  <li>Format & align add instrument button</li>
+  <li>List search</li>
+  <li>Fix or remove Field Icons</li>
+  <li>Try floating icons</li>
+  <li>get options from table</li>
+</ul>
+
+
 {% endblock %}

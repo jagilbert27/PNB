@@ -32,22 +32,38 @@ class Student(db.Model):
 
 class Instrument(db.Model):
     __tablename__ = 'instruments'
-    id       = db.Column(db.Integer, primary_key=True)
-    type_id  = db.Column(db.Integer, db.ForeignKey('instrument_types.id'))
-    type     = relationship("InstrumentType", back_populates="instruments")
-    students = relationship("StudentInstrument",back_populates="instrument")
-    tag      = db.Column(db.String(150))
-    serial   = db.Column(db.String(150))
-    size     = db.Column(db.String(150))
-    brand    = db.Column(db.String(150))
-
+    id            = db.Column(db.Integer, primary_key=True)
+    type_id       = db.Column(db.Integer, db.ForeignKey('instrument_types.id'))
+    size_id       = db.Column(db.Integer, db.ForeignKey('instrument_sizes.id'))
+    condition_id  = db.Column(db.Integer, db.ForeignKey('instrument_conditions.id'))
+    type          = relationship("InstrumentType", back_populates="instruments")
+    size          = relationship("InstrumentSize",back_populates="instruments")
+    condition     = relationship("InstrumentCondition",back_populates="instruments")
+    students      = relationship("StudentInstrument",back_populates="instrument")
+    tag           = db.Column(db.String(150))
+    serial        = db.Column(db.String(150))
+    brand         = db.Column(db.String(150))
+    model         = db.Column(db.String(150))
+    location      = db.Column(db.String(150))
+    est_value     = db.Column(db.Integer)
 
 class InstrumentType(db.Model):
     __tablename__ = 'instrument_types'
-    id       = db.Column(db.Integer, primary_key=True)
-    instruments = relationship(Instrument, back_populates='type')
-    name     = db.Column(db.String(20))
+    id            = db.Column(db.Integer, primary_key=True)
+    instruments   = relationship(Instrument, back_populates='type')
+    name          = db.Column(db.String(20))
 
+class InstrumentSize(db.Model):
+    __tablename__ = 'instrument_sizes'
+    id            = db.Column( db.Integer, primary_key=True)
+    instruments   = relationship(Instrument, back_populates='size')
+    name          = db.Column(db.String)
+
+class InstrumentCondition(db.Model):
+    __tablename__ = 'instrument_conditions'
+    id            = db.Column( db.Integer, primary_key=True)
+    instruments   = relationship(Instrument, back_populates='condition')
+    name          = db.Column(db.String)
 
 class StudentInstrument(db.Model):
     __tablename__ = 'students_instruments'
