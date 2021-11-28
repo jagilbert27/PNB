@@ -20,7 +20,7 @@
   </thead>
   <tbody id="table-body">
     {% for student in students %}
-      {% for checkout in student.instruments %}
+      {% for checkout in student.checkouts %}
         <tr>
           <td><a href="{{ url_for('views.student_edit',id=student.id)}}">{{ student.first_name }} {{ student.last_name }}</a></td>
           <td><a href="{{ url_for('views.instrument_edit', id=checkout.instrument.id)}}">{{ checkout.instrument.tag}}: {{ checkout.instrument.type.name }}</a></td>
@@ -32,8 +32,7 @@
           <td>{{ checkout.return_location }}</td>
 
           <td>
-            <a class="mr-2" href="{{ url_for('views.student_edit',id=student.id)}}">edit</a>
-            <a class="mr-2" href="{{ url_for('views.student_edit',id=student.id)}}">delete</a>
+            <a class="mr-2" href="{{ url_for('views.checkout_edit',id=checkout.id)}}">Return</a>
           </td>
 
 

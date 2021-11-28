@@ -8,18 +8,18 @@
   </style>
 
 <div class="container-fluid mt-4 mb-4 p-2 bg-primary text-white rounded">
-  <h3><span style="font-weight:100">{% if instrument.id %} Edit {% else %} New {% endif %}</span>&nbsp;<span
+  <h3><span style="font-weight:100">{% if instrument.id %}Edit{% else %}Add{% endif %}</span>&nbsp;<span
       style="font-weight: 700"></span>Instrument</span></h3>
 </div>
 
-<form class="row g-3" method="POST">
+<form class="row g-3" style='background-color: #eee;' method="POST">
 
   <!-- Tag -->
   <div class="col-md-4 required">
     <div class="form-floating mb-3">
-      <input type="text" class="form-control" id="instrument_tag" name="instrument_tag" placeholder="Ex: F1"
+      <input type="text" required class="form-control" id="instrument_tag" name="instrument_tag" placeholder="Ex: F1"
         value="{% if instrument.tag %} {{ instrument.tag }} {% endif %}">
-      <label for="instrument_tag">Tag Number</label>
+      <label for="instrument_tag">Tag Number *</label>
     </div>
   </div>
   
@@ -76,9 +76,20 @@
     </div>
   </div>
 
-
+  <!-- Status -->
+  <div class="col-md-3 required">
+    <div class="form-floating">
+      <select class="form-select" name=instrument_status id=instrument_status aria-label="Floating label select example">
+        {% for status in instrument_statuses %}
+        <option {% if instrument.status_id == status.id %} selected {% endif %} value="{{status.id}}">{{status.name}}</option>
+        {% endfor %}
+      </select>
+      <label for="instrument_status">Status</label>
+    </div>
+  </div>  
+  
   <!-- Condition -->
-  <div class="col-md-4 required">
+  <div class="col-md-3 required">
     <div class="form-floating">
       <select class="form-select" name=instrument_condition id=instrument_condition aria-label="Floating label select example">
         {% for condition in instrument_conditions %}
@@ -90,7 +101,7 @@
   </div>
 
   <!-- Location -->
-  <div class="col-md-4 required">
+  <div class="col-md-3 required">
     <div class="form-floating mb-3">
       <input type="text" class="form-control" id="instrument_location" name="instrument_location" placeholder="Ex: ABC123"
         value="{% if instrument.location %} {{ instrument.location }} {% endif %}">
@@ -99,7 +110,7 @@
   </div>
 
 <!-- Value -->
-  <div class="col-md-4 required">
+  <div class="col-md-3 required">
     <div class="form-floating mb-3">
       <input type="text" class="form-control" id="instrument_value" name="instrument_value" placeholder="Ex: ABC123"
         value="{% if instrument.value %} {{ instrument.value }} {% endif %}">
@@ -114,6 +125,57 @@
       <label for="instrument_notes">Notes</label>
     </div>
   </div>
+
+
+  
+  {% if instrument.id %}
+
+  <!-- Checkouts -->
+  <div class="col-md-12 form-group required">
+    <table id=checkout-table class='table table-striped'>
+      <thead id="table-head">
+        <tr>
+          <th colspan=4>Checkout History</th>
+          <th colspan=2 style="text-align:right;">New</th>
+        </tr>
+        <tr>
+          <th>Checked Out</th>
+          <th>Student</th>
+          <th>Out Condition</th>
+          <th>Due</th>
+          <th>Returned</th>
+          <th>Due</th>
+          <th>In Condition</th>
+          <th>Returned To</th>
+          <th>Notes</th>
+          <th>?</th>
+
+        </tr>
+      </thead>
+      <tbody id="table-body">
+
+        {% for checkout in instrument.checkouts %}
+        <tr>
+          <td>{{ checkout.checkout_date }}</td>
+          <td><b><a style="text-decoration-line:none"
+            href="{{ url_for('views.student_edit', id=checkout.student_id)}}">{{ checkout.student.first_name }} {{ checkout.student.last_name }} 
+            </a></b></td>
+
+
+          <td>{{ checkout.checkout_condition }}</td>
+          <td>{{ checkout.due_date }}</td>
+          <td>{{ checkout.return_date }}</td>
+          <td>{{ checkout.return_condition }}</td>
+          <td>{{ checkout.return_location }}</td>
+          <td>{{ checkout.Notes }}</td>
+          <td><b><a style="text-decoration-line:none" href="{{ url_for('views.checkout_edit',id=checkout.id)}}">Return</a></b></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
 
 
   <br />

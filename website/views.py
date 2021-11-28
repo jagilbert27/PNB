@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for
 from flask_login import login_required, current_user
-from .models import Note, Student, Instrument, StudentInstrument, InstrumentType, InstrumentSize, InstrumentCondition
+from .models import Note, Student, Instrument, StudentInstrument, InstrumentType, InstrumentSize, InstrumentCondition, InstrumentStatus
 from . import db
 import json
 import sqlalchemy
@@ -33,7 +33,12 @@ def fill():
     db.session.add(InstrumentCondition(id=4, name='Good'))
     db.session.add(InstrumentCondition(id=3, name='Fair'))
     db.session.add(InstrumentCondition(id=2, name='Poor'))
-    db.session.add(InstrumentCondition(id=1, name='Unservicable'))
+    db.session.add(InstrumentCondition(id=1, name='Broken'))
+
+    db.session.add(InstrumentStatus(id=1, name='Available for Checkout'))
+    db.session.add(InstrumentStatus(id=2, name='Checked Out to Student'))
+    db.session.add(InstrumentStatus(id=3, name='Out for Repair'))
+    db.session.add(InstrumentStatus(id=4, name='Decommissioned'))
 
     db.session.commit()
     db.session.add(Instrument(type_id=1, tag='F1', condition_id=3 ))
@@ -182,12 +187,17 @@ def instrument_new():
     instrument_types = InstrumentType.query.all()
     instrument_conditions = InstrumentCondition.query.all()
     instrument_sizes = InstrumentSize.query.all()
+    instrument_statuses = InstrumentStatus.query.all()
+
+
+
     return render_template(
         "instrument_edit.html", 
         instrument=instrument, 
         instrument_types = instrument_types, 
         instrument_conditions=instrument_conditions,
         instrument_sizes = instrument_sizes,
+        instrument_statuses = instrument_statuses,
         user=current_user) 
 
 # Instrument Edit
@@ -209,17 +219,19 @@ def instrument_edit(id):
         db.session.commit()
         flash('Instrument Added!', category='success')
         return redirect(url_for('views.instrument_list'))
-
     instrument_types = InstrumentType.query.all()
-    instrument_conditions = InstrumentCondition.query.order_by(InstrumentCondition.id.desc()).all()
+    instrument_conditions = InstrumentCondition.query.all()
     instrument_sizes = InstrumentSize.query.all()
+    instrument_statuses = InstrumentStatus.query.all()
+
     return render_template(
         "instrument_edit.html", 
         instrument=instrument, 
         instrument_types = instrument_types, 
         instrument_conditions=instrument_conditions,
         instrument_sizes = instrument_sizes,
-        user=current_user)
+        instrument_statuses = instrument_statuses,
+        user=current_user) 
 
 # Instrument View
 @views.route('/instrument/view/<int:id>', methods=['GET','POST'])
@@ -230,19 +242,44 @@ def instrument_view(id):
 
 
 # Checkouts
-@views.route('/checkout', methods=['GET','POST'])
+@views.route('/checkouts', methods=['GET','POST'])
 @login_required
 def checkout_list():
-    # checkouts = StudentInstrument.query.all()
-    # students = Student.query.join(StudentInstrument).join(Instrument).all()
     students = Student.query.all()
 
-    msg = "Student structure:<br/><br/>"
-    for student in students:
-        msg += f'Student.first_name: {student.first_name} <br/>'
-        for checkout in student.instruments:
-            msg += f'    Checkout Date {checkout.checkout_date.strftime("%m/%d/%Y")} <br/>'
-            msg += f'        Type: {checkout.instrument.type} <br/><br/>'
+    # msg = "Student structure:<br/><br/>"
+    # for student in students:
+    #     msg += f'Student.first_name: {student.first_name} <br/>'
+    #     for checkout in student.checkouts:
+    #         msg += f'    Checkout Date {checkout.checkout_date.strftime("%m/%d/%Y")} <br/>'
+    #         msg += f'        Type: {checkout.instrument.type} <br/><br/>'
     # return msg
 
     return render_template("checkout_list.html",students=students, user=current_user)    
+
+
+# Checkout Edit
+@views.route('/checkout/edit/<int:id>', methods=['GET','POST'])
+@login_required
+def checkout_edit(id):
+    checkout = StudentInstrument.query.get_or_404(id)
+    instruments = Instrument.query.all()
+    students = Student.query.all()
+    instrument_conditions = InstrumentCondition.query.all()
+
+    if request.method == 'GET':
+        return render_template(
+            "checkout_edit.html", 
+            checkout=checkout, 
+            instruments = instruments,
+            students = students,
+            instrument_conditions = instrument_conditions,
+            user=current_user)
+    
+    # if request.method == 'POST':
+    #     student.email = request.form.get('email')
+    #     student.first_name = request.form.get('first_name')
+    #     student.last_name = request.form.get('last_name')
+    #     db.session.commit()
+    #     flash('Student Updated!', category='success')
+    #     return redirect(url_for('views.checkout_list'))

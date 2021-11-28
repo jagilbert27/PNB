@@ -76,7 +76,7 @@ content %}
         </tr>
       </thead>
       <tbody id="table-body">
-        {% for checkout in student.instruments %}
+        {% for checkout in student.checkouts %}
         <tr>
           <td>{{ checkout.checkout_date }}</td>
           <td><b><a style="text-decoration-line:none"
@@ -89,7 +89,7 @@ content %}
           <td>{{ checkout.return_condition }}</td>
           <td>{{ checkout.return_location }}</td>
           <td>{{ checkout.Notes }}</td>
-          <td><b><a style="text-decoration-line:none" href="{{ url_for('views.checkout_list')}}">Return</a></b></td>
+          <td><b><a style="text-decoration-line:none" href="{{ url_for('views.checkout_edit',id=checkout.id)}}">Return</a></b></td>
         </tr>
         {% endfor %}
       </tbody>

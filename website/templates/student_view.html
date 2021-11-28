@@ -25,7 +25,7 @@ content %}
   <div class="col-md-2 form-group">Email:</div>
   <div class="col-md-10 form-group">{{student.email}}</div>
 
-  {% if student.instruments | length > 0%}
+  {% if student.checkouts | length > 0%}
   <!-- Checkouts -->
   <div class="col-md-12 form-group required">
     <table id=student-table class='table table-striped'>
@@ -50,12 +50,14 @@ content %}
         </tr>
       </thead>
       <tbody id="table-body">
-        {% for checkout in student.instruments %}
+        {% for checkout in student.checkouts %}
         <tr>
           <td>{{ checkout.checkout_date }}</td>
           <td><b><a style="text-decoration-line:none"
-                href="{{ url_for('views.instrument_edit', id=checkout.instrument.id)}}">{{ checkout.instrument.tag
-                }}</a></b></td>
+                href="{{ url_for('views.instrument_edit', id=checkout.instrument.id)}}">
+                {{ checkout.instrument.tag }}
+              </a></b>
+          </td>
           <td>{{ checkout.instrument.type.name }}</a></td>
           <td>{{ checkout.checkout_condition }}</td>
           <td>{{ checkout.due_date }}</td>
