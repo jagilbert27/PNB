@@ -17,11 +17,13 @@ def fill():
     InstrumentCondition.query.delete()
     InstrumentSize.query.delete()
     InstrumentType.query.delete()
+    InstrumentStatus.query.delete()
     db.session.commit()
     flash('DB Cleared')
     db.session.add(InstrumentSize(id=1, name="Standard"))
     db.session.add(InstrumentSize(id=2, name="3/4"))
     db.session.add(InstrumentSize(id=3, name="1/2"))
+
     db.session.add(InstrumentType(id=1, name='Fiddle'))
     db.session.add(InstrumentType(id=2, name='Guitar'))
     db.session.add(InstrumentType(id=3, name='Mandolin'))
@@ -35,13 +37,14 @@ def fill():
     db.session.add(InstrumentCondition(id=2, name='Poor'))
     db.session.add(InstrumentCondition(id=1, name='Broken'))
 
-    db.session.add(InstrumentStatus(id=1, name='Available for Checkout'))
-    db.session.add(InstrumentStatus(id=2, name='Checked Out to Student'))
-    db.session.add(InstrumentStatus(id=3, name='Out for Repair'))
-    db.session.add(InstrumentStatus(id=4, name='Decommissioned'))
+    db.session.add(InstrumentStatus(id=1, name='Available for checkout'))
+    db.session.add(InstrumentStatus(id=2, name='Checked out to Student'))
+    db.session.add(InstrumentStatus(id=3, name='Needs Repair'))
+    db.session.add(InstrumentStatus(id=4, name='Out for Repair'))
+    db.session.add(InstrumentStatus(id=5, name='Decommissioned'))
 
     db.session.commit()
-    db.session.add(Instrument(type_id=1, tag='F1', condition_id=3 ))
+    db.session.add(Instrument(type_id=1, tag='F1', condition_id=3, status_id=1 ))
     db.session.add(Instrument(type_id=2, tag='G1', condition_id=4 ))
     db.session.add(Student(email='a@a.com',first_name='Alpha',last_name='A'))
     db.session.add(Student(email='b@b.com',first_name='Bravo',last_name='B'))
@@ -114,7 +117,7 @@ def student_new():
                 )
             db.session.add(student)
             db.session.commit()
-            flash('Student Added!', category='success')
+            flash(f'Added Student {student.first_name} {student.last_name}', category='success')
             return redirect(url_for('views.student_list'))
         except sqlalchemy.exc.IntegrityError as ex:
             db.session.rollback()
@@ -133,7 +136,7 @@ def student_edit(id):
         student.first_name = request.form.get('first_name')
         student.last_name = request.form.get('last_name')
         db.session.commit()
-        flash('Student Updated!', category='success')
+        flash(f'Updated Student {student.first_name} {student.last_name}', category='success')
         return redirect(url_for('views.student_list'))
 
 # Student New
@@ -150,12 +153,12 @@ def student_delete():
     request_data = json.loads(request.data)
     student_id = request_data['student_id']
     student= Student.query.get(student_id)
-    success_msg = f'Deleted {student.first_name} {student.last_name}'
+    msg = f'Deleted Student {student.first_name} {student.last_name}'
     if student:
         try:
             db.session.delete(student)
             db.session.commit()
-            flash(success_msg, category='success')
+            flash(msg, category='warning')
         except BaseException as ex:
             db.session.rollback()
             flash(f'Delete Failed {type(ex)}', category='error')

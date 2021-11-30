@@ -1,62 +1,94 @@
 {% extends "base.html" %} {% block title %}Instruments{% endblock %} {% block content %}
-
-<div class="container-fluid mt-4 mb-4 p-2 bg-primary text-white rounded">
-  <h3><span style="font-weight:100">List</span>&nbsp;<span style="font-weight: 700"></span>Instruments</span>
-    <span style="text-align:right">
-      <a type="button" href="{{ url_for('views.instrument_new')}}" class="btn btn-success"><i
-          class="bi bi-plus-circle"></i>&nbsp;Add Instrument</a>
-    </span>
-  </h3>
+<div class="d-flex bg-primary text-white rounded">
+  <div class="p-1 flex-grow-1 bd-highlight">
+    <h3><span style="font-weight:100">List</span>&nbsp;<span style="font-weight: 700"></span>Instruments</span></h3>
+  </div>
+  <div class="p-1">
+    <div class="rounded" style="background-color:#ddd;padding:1px">
+      <a href="{{ url_for('views.student_new')}}" type="button" class="btn btn-outline-success" data-bs-toggle="tooltip"
+        data-bs-placement="left" title="Add Instrument to Inventory">
+        <span aria-hidden="true"><i class="bi bi-plus-circle"></i></span>
+      </a>
+    </div>
+  </div>
 </div>
-  <table id=checkout-table class='table table-striped'>
-    <thead id="table-head">
-      <tr>
-        <th>Tag</th>
-        <th>Type</th>
-        <th>Brand</th>
-        <th>Size</th>
-        <th>Condition</th>
-        <th>Status</th>
-        <th>Location</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="table-body">
-      {% for instrument in instruments %}
-      <tr>
-        <td><a href="{{ url_for('views.instrument_edit',id=instrument.id)}}">{{ instrument.tag }}</a></td>
-        <td>{{ instrument.type.name }}</td>
-        <td>{{ instrument.brand }}</td>
-        <td>{{ instrument.size.name }}</td>
-        <td>{{ instrument.condition.name }}</td>
-        <td> todo </td>
-        <td>{{ instrument.location }}</td>
-        <td style="text-align:right">
-          <a href="{{ url_for('views.instrument_view',id=instrument.id)}}" type="button" class="btn btn-outline-success">
-            <span aria-hidden="true"><i class="bi bi-eye"></i></span>
-          </a>
-
-          <a href="{{ url_for('views.instrument_edit',id=instrument.id)}}" type="button" class="btn btn-outline-warning">
-            <span aria-hidden="true"><i class="bi bi-pencil"></i></span>
-          </a>
-
-          <button type="button" onClick="deleteInstrument({{ instrument.id }})" class="btn btn-outline-danger">
-            <span><i class="bi bi-x-circle"></i></span>
-          </button>
-        </td>
-
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <br/>
-
-  <h4>ToDo</h4>
-  <ul>
-    <li>Format & align add instrument button</li>
-    <li>List search</li>
-  </ul>
-  
 
 
-  {% endblock %}
+<table id=checkout-table class='table table-striped'>
+  <thead id="table-head">
+    <tr>
+      <th>Tag</th>
+      <th>Type</th>
+      <th>Brand</th>
+      <th>Size</th>
+      <th>Condition</th>
+      <th>Status</th>
+      <th>Location</th>
+      <th style="text-align:right">Actions</th>
+    </tr>
+  </thead>
+  <tbody id="table-body">
+    {% for instrument in instruments %}
+    {% set ns = namespace(is_checked_out = false ) %}    
+    <tr>
+      <td><a href="{{ url_for('views.instrument_edit',id=instrument.id)}}">{{ instrument.tag }}</a></td>
+      <td>{{ instrument.type.name }}</td>
+      <td>{{ instrument.brand }}</td>
+      <td>{{ instrument.size.name }}</td>
+      <td>{{ instrument.condition.name }}</td>
+      <td>
+        {% for checkout in instrument.checkouts %}
+          {% if checkout.checkout_date and not checkout.return_date %}
+            {% set ns.is_checked_out = true %}
+            {% if loop.first == false %}<br/>{% endif %}
+            <a href="{{ url_for('views.checkout_edit',id=checkout.id)}}">Checked out on {{ checkout.checkout_date}}</a>
+          {% endif %}
+        {% endfor %}
+        {% if ns.is_checked_out == false %}
+          {{instrument.status.name}}
+        {% endif %}
+      </td>
+      <td>
+        {% for checkout in instrument.checkouts %}
+          {% if checkout.checkout_date and not checkout.return_date %}
+            {% if not loop.first %}<br/>{% endif %}
+            To <a href="{{ url_for('views.student_edit',id=checkout.student.id)}}">{{ checkout.student.first_name }} {{ checkout.student.last_name }}</a>
+          {% endif %}
+        {% endfor %}
+          {% if ns.is_checked_out == false %}
+          {{ instrument.location }}
+        {% endif %}
+      </td>
+      <td style="text-align:right">
+        <a href="{{ url_for('views.instrument_view',id=instrument.id)}}" type="button" class="btn btn-outline-success btn-sm">
+          <span aria-hidden="true"><i class="bi bi-eye"></i></span>
+        </a>
+
+        <a href="{{ url_for('views.instrument_edit',id=instrument.id)}}" type="button" class="btn btn-outline-warning btn-sm">
+          <span aria-hidden="true"><i class="bi bi-pencil"></i></span>
+        </a>
+
+        <button type="button" onClick="deleteInstrument({{ instrument.id }})" class="btn btn-outline-danger btn-sm">
+          <span><i class="bi bi-x-circle"></i></span>
+        </button>
+      </td>
+
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<br />
+
+
+<h4>ToDo:</h4>
+<ul>
+  <li><del></del>Add Instrument: Float right</del></li>
+  <li>List: Delete are you sure</li>
+  <li>List: Flash on delete fail w/ meaningful msg</li>
+  <li>List: Auth protect delete and edit</li>
+  <li>List: Sort</li>
+  <li>List: Search</li>
+  <li>Make a view instrument</li>
+  <li><del></del>Add Instrument: Float right</del></li>
+</ul>
+{% endblock %}
