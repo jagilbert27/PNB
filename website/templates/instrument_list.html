@@ -37,26 +37,22 @@
       <td>{{ instrument.size.name }}</td>
       <td>{{ instrument.condition.name }}</td>
       <td>
-        {% for checkout in instrument.checkouts %}
-          {% if checkout.checkout_date and not checkout.return_date %}
-            {% set ns.is_checked_out = true %}
-            {% if loop.first == false %}<br/>{% endif %}
-            <a href="{{ url_for('views.checkout_edit',id=checkout.id)}}">Checked out on {{ checkout.checkout_date}}</a>
-          {% endif %}
+        {% for checkout in instrument.checkouts if checkout.checkout_date and not checkout.return_date %}
+          {% set ns.is_checked_out = true %}
+          {% if not loop.first %}<br/>{% endif %}
+          <a href="{{ url_for('views.checkout_edit',id=checkout.id)}}">Checked out on {{ checkout.checkout_date}}</a>
         {% endfor %}
         {% if ns.is_checked_out == false %}
           {{instrument.status.name}}
         {% endif %}
       </td>
       <td>
-        {% for checkout in instrument.checkouts %}
-          {% if checkout.checkout_date and not checkout.return_date %}
-            {% if not loop.first %}<br/>{% endif %}
-            To <a href="{{ url_for('views.student_edit',id=checkout.student.id)}}">{{ checkout.student.first_name }} {{ checkout.student.last_name }}</a>
-          {% endif %}
+        {% for checkout in instrument.checkouts if checkout.checkout_date and not checkout.return_date %}
+          {% if not loop.first %}<br/>{% endif %}
+          To <a href="{{ url_for('views.student_edit',id=checkout.student.id)}}">{{ checkout.student.first_name }} {{ checkout.student.last_name }}</a>
         {% endfor %}
-          {% if ns.is_checked_out == false %}
-          {{ instrument.location }}
+        {% if ns.is_checked_out == false %}
+        {{ instrument.location }}
         {% endif %}
       </td>
       <td style="text-align:right">
@@ -82,13 +78,12 @@
 
 <h4>ToDo:</h4>
 <ul>
-  <li><del></del>Add Instrument: Float right</del></li>
   <li>List: Delete are you sure</li>
   <li>List: Flash on delete fail w/ meaningful msg</li>
   <li>List: Auth protect delete and edit</li>
   <li>List: Sort</li>
   <li>List: Search</li>
   <li>Make a view instrument</li>
-  <li><del></del>Add Instrument: Float right</del></li>
+  <li><del>Add Instrument: Float right</del></li>
 </ul>
 {% endblock %}

@@ -25,10 +25,10 @@
           <td><a href="{{ url_for('views.student_edit',id=student.id)}}">{{ student.first_name }} {{ student.last_name }}</a></td>
           <td><a href="{{ url_for('views.instrument_edit', id=checkout.instrument.id)}}">{{ checkout.instrument.tag}}: {{ checkout.instrument.type.name }}</a></td>
           <td>{{ checkout.checkout_date }}</td>
-          <td>{{ checkout.checkout_condition }}</td>
+          <td>{{ checkout.checkout_condition.name }}</td>
           <td>{{ checkout.due_date }}</td>
           <td>{{ checkout.return_date }}</td>
-          <td>{{ checkout.return_condition }}</td>
+          <td>{{ checkout.return_condition.name }}</td>
           <td>{{ checkout.return_location }}</td>
 
           <td>

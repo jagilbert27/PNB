@@ -1,6 +1,6 @@
 from sqlalchemy.sql.expression import column
 from . import db
-from flask_login import UserMixin
+from flask_user import UserMixin
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
@@ -11,14 +11,27 @@ class Note(db.Model):
     date = db.Column(db.DateTime(timezone=True), default=func.now())
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
+    active = db.Column('is_active', db.Boolean(), nullable=False, server_default='1')    
+    email_confirmed_at = db.Column(db.DateTime())
+    roles = db.relationship('Role', secondary='user_roles')
     email = db.Column(db.String(150), unique=True)
     password = db.Column(db.String(150))
     first_name = db.Column(db.String(150))
     notes = db.relationship('Note')
 
+class Role(db.Model):
+    __tablename__ = 'roles'
+    id = db.Column(db.Integer(), primary_key=True)
+    users = db.relationship('User', secondary='user_roles')
+    name = db.Column(db.String(50), unique=True)
+
+class UserRoles(db.Model):
+    __tablename__ = 'user_roles'
+    id = db.Column(db.Integer(), primary_key=True)
+    user_id = db.Column(db.Integer(), db.ForeignKey('user.id', ondelete='CASCADE'))
+    role_id = db.Column(db.Integer(), db.ForeignKey('roles.id', ondelete='CASCADE'))    
 
 class Student(db.Model):
     __tablename__ = 'students'
@@ -29,7 +42,6 @@ class Student(db.Model):
     last_name =  db.Column( db.String(150))
     notes =  db.Column( db.String(150))
     birthday = db.Column( db.Date)
-
 
 class Instrument(db.Model):
     __tablename__ = 'instruments'
@@ -62,11 +74,6 @@ class InstrumentSize(db.Model):
     instruments   = relationship(Instrument, back_populates='size')
     name          = db.Column(db.String)
 
-class InstrumentCondition(db.Model):
-    __tablename__ = 'instrument_conditions'
-    id            = db.Column( db.Integer, primary_key=True)
-    instruments   = relationship(Instrument, back_populates='condition')
-    name          = db.Column(db.String)
 
 class InstrumentStatus(db.Model):
     __tablename__ = 'instrument_statuses'
@@ -75,19 +82,28 @@ class InstrumentStatus(db.Model):
     name          = db.Column(db.String)
 
 class StudentInstrument(db.Model):
-    __tablename__ = 'students_instruments'
-    id            = db.Column(db.Integer, primary_key=True)
-    student_id    = db.Column(db.ForeignKey('students.id'))
-    instrument_id = db.Column(db.ForeignKey('instruments.id'))
-    checkout_date = db.Column(db.Date)
-    student=relationship("Student",back_populates="checkouts")
-    instrument=relationship("Instrument",back_populates="checkouts")
-    checkout_condition = db.Column(db.Integer)
-    due_date = db.Column(db.Date)
-    return_date = db.Column(db.Date)
-    return_condition = db.Column(db.Integer)
-    return_location = db.Column(db.String(100))
-    notes = db.Column(db.String(1000))
-    __table_args__ = (UniqueConstraint('student_id', 'instrument_id', 'checkout_date', name='_unique_student_instrument_checkoutdate'),)    
+    __tablename__           = 'students_instruments'
+    __table_args__          = (UniqueConstraint('student_id', 'instrument_id', 'checkout_date', name='_unique_student_instrument_checkoutdate'),)    
+    id                      = db.Column(db.Integer, primary_key=True)
+    student_id              = db.Column(db.ForeignKey('students.id'))
+    instrument_id           = db.Column(db.ForeignKey('instruments.id'))
+    checkout_condition_id   = db.Column(db.Integer, db.ForeignKey('instrument_conditions.id'))
+    return_condition_id     = db.Column(db.Integer, db.ForeignKey('instrument_conditions.id'))
+    student                 = relationship("Student",back_populates="checkouts")
+    instrument              = relationship("Instrument",back_populates="checkouts")
+    # checkout_condition      = relationship("InstrumentCondition",foreign_keys=[])
+    # return_condition        = relationship("InstrumentCondition",back_populates="checkout_return_conditions")
+    checkout_condition      = relationship("InstrumentCondition", foreign_keys=[checkout_condition_id])
+    return_condition        = relationship("InstrumentCondition", foreign_keys=[return_condition_id])
+    checkout_date           = db.Column(db.Date)
+    due_date                = db.Column(db.Date)
+    return_date             = db.Column(db.Date)
+    return_location         = db.Column(db.String(100))
+    notes                   = db.Column(db.String(1000))
 
- 
+class InstrumentCondition(db.Model):
+    __tablename__ = 'instrument_conditions'
+    id            = db.Column( db.Integer, primary_key=True)
+    instruments   = relationship(Instrument, back_populates='condition')
+    name          = db.Column(db.String)
+

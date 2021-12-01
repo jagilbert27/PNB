@@ -17,34 +17,34 @@
   <!-- Student -->
   <div class="col-md-6 required">
     <div class="form-floating">
-      <select class="form-select" name=student id=student >
+      <select class="form-select" name=student_id id=student_id >
         <option>Select Student</option>
         {% for student in students %}
         <option {% if student.id == checkout.student_id %} selected {% endif %} value="{{student.id}}">{{ student.first_name }} {{student.last_name }}</option>
         {% endfor %}
       </select>
-      <label for="student">Student</label>
+      <label for="student_id">Student</label>
     </div>
   </div>
 
   <!-- Instrument -->
   <div class="col-md-6 required">
     <div class="form-floating">
-      <select class="form-select" name=student id=student >
+      <select class="form-select" name=instrument_id id=instrument_id >
         <option>Select Instrument</option>
         {% for instrument in instruments %}
         <option {% if instrument.id == checkout.instrument_id %} selected {% endif %} value="{{instrument.id}}">{{ instrument.tag }}: {{instrument.type.name }}</option>
         {% endfor %}
       </select>
-      <label for="student">Instrument</label>
+      <label for="instrument_id">Instrument</label>
     </div>
   </div>
 
   <!-- Checkout Date -->
   <div class="col-md-4 required">
-    <div class="form-floating">
-      <input type="text" class="form-select" name="checkout_date" required value = "{{checkout.checkout_date}}">
-      <label for="checkout_date">Checkout Date</label>
+    <div class="form-floating mb-3">
+      <input type='date' class="form-control" name=checkout_date id=checkout_date required value="{{ checkout.checkout_date }}">
+      <label for=checkout_date >Out date</label>
     </div>
   </div>
 
@@ -53,75 +53,69 @@
     <div class="form-floating">
       <select class="form-select" name=checkout_condition id=checkout_condition aria-label="Floating label select example">
         {% for condition in instrument_conditions %}
-        <option {% if condition.condition_id == checkout.checkout_condition %} selected {% endif %} value="{{condition.id}}">{{condition.name}}</option>
+        <option {% if condition.id == checkout.checkout_condition.id %} selected {% endif %} value="{{condition.id}}">{{condition.name}}</option>
         {% endfor %}
       </select>
-      <label for="checkout_condition">Checkout Condition</label>
+      <label for="checkout_condition">Out Condition</label>
     </div>
   </div>
 
-    <!-- Return Due Date -->
-    <div class="col-md-4 required">
-      <div class="form-floating">
-        <input type="text" class="form-select" id='due_date' name="due_date" value="{{checkout.due_date}}">
-        <label for="due_date">Due Date</label>
-      </div>
+   <!-- Return Due Date -->
+   <div class="col-md-4 required">
+    <div class="form-floating mb-3">
+      <input type='date' class="form-control" name=due_date id=due_date value="{{ checkout.due_date }}">
+      <label for=due_date >Due Date</label>
     </div>
+  </div>
 
-    <!-- Return Date -->
-    <div class="col-md-4 required">
-      <div class="form-floating">
-        <input type="text" class="form-select" id='return_date' name="return_date" value="{{checkout.return_date}}">
-        <label for="return_date">Return Date</label>
-      </div>
+  <!-- Return Date -->
+  <div class="col-md-4 required">
+    <div class="form-floating mb-3">
+      <input type='date' class="form-control" name=return_date id=return_date>
+      <label for=return_date >Return Date</label>
     </div>
+  </div>
 
+  <div class="col-md-4 required">
+    <div class="form-floating">
+      <input type="text" class="date form-select" id=return_date name=return_date value="{{ checkout.return_date }}">
+      <label for="return_date">Return Date</label>
+    </div>
+  </div>
+ 
   <!-- Return Condition -->
   <div class="col-md-4 required">
     <div class="form-floating">
       <select class="form-select" name=return_condition id=return_condition aria-label="Floating label select example">
         {% for condition in instrument_conditions %}
-        <option {% if condition.condition_id == checkout.return_condition %} selected {% endif %} value="{{condition.id}}">{{condition.name}}</option>
+        <option {% if condition.id == checkout.return_condition.id %} selected {% endif %} value="{{condition.id}}">{{condition.name}}</option>
         {% endfor %}
       </select>
       <label for="return_condition">Return Condition</label>
     </div>
   </div>
 
-
-    <!-- Location -->
+  <!-- Location -->
   <div class="col-md-4 required">
     <div class="form-floating mb-3">
-      <input type="text" class="form-control" id="checkin_location" name="checkin_location" placeholder="Ex: ABC123"
+      <input type="text" class="form-control" id=return_location name=return_location placeholder="Ex: ABC123"
         value="{% if checkout.location %}{{ checkout.location }}{% endif %}">
-      <label for="checkin_location">Location</label>
+      <label for=return_location>Location</label>
     </div>
   </div>
 
-    <!-- Notes -->
-    <div class="col-md-12 required">
-      <div class="form-floating mb-3">
-        <textarea class="form-control" id="checkout_notes" name="checkout_notes" placeholder="Ex: ABC123">{% if checkout.notes %}{{ checkout.notes }}{% endif %}</textarea>
-        <label for="checkout_notes">Notes</label>
-      </div>
+  <!-- Notes -->
+  <div class="col-md-12 required">
+    <div class="form-floating mb-3">
+      <textarea class="form-control" id=notes name=notes placeholder="Ex: ABC123">{% if checkout.notes %}{{ checkout.notes }}{% endif %}</textarea>
+      <label for=notes >Notes</label>
     </div>
-
+  </div>
 
   <div class="col-12">
     <button type="submit" class="btn btn-primary">Submit</button>
   </div>
 </form>
-
-<script type="text/javascript">
-  $(function () {
-    $('.date').datepicker({
-      todayBtn: "linked",
-      clearBtn: true,
-      autoclose: true
-    });
-  });
-</script>
-
 
 <h3>ToDo:</h3>
 <ul>
