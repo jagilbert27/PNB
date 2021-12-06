@@ -2,12 +2,14 @@ from re import X
 from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for
 from flask_login import login_required, current_user
 from flask_user import current_user, login_required, roles_required, UserMixin
+from sqlalchemy.sql.elements import Null
+from sqlalchemy.sql.expression import desc, null, select, true
 
-from .models import Note, Student, Instrument, StudentInstrument, InstrumentType, InstrumentSize, InstrumentCondition, InstrumentStatus, Role, UserRoles
+from .models import Note, Student, Instrument, StudentInstrument, InstrumentType, InstrumentSize, InstrumentCondition, InstrumentStatus, Role, UserRoles, Semester
 from . import db
 import json
 import sqlalchemy
-from datetime import datetime 
+from datetime import datetime, timedelta 
 
 views = Blueprint('views', __name__)
 
@@ -59,6 +61,10 @@ def fill():
     db.session.add(StudentInstrument(student_id=1, instrument_id=2, checkout_date=datetime(2021,11,1)))
     db.session.add(StudentInstrument(student_id=2, instrument_id=1, checkout_date=datetime(2021,11,1)))
 
+    db.session.add(Semester(name='Winter 2021/2022', earliest_checkout_date = datetime(2021,10,1), latest_due_date = datetime(2022,2,1)))
+    db.session.add(Semester(name='Spring 2022',      earliest_checkout_date = datetime(2022,2,2), latest_due_date = datetime(2022,6,1)))
+    db.session.add(Semester(name='Summer 2022', earliest_checkout_date = datetime(2022,6,2), latest_due_date = datetime(2022,10,2)))
+
     # db.session.add(Role(id=1, name='dev'))
     # db.session.add(UserRoles( user_id=1, role_id=1))
 
@@ -99,12 +105,26 @@ def delete_note():
 
 
 # Student List
-@views.route('/students', methods=['GET'])
+@views.route('/students', methods=['GET','POST'])
 @login_required
 def student_list():
-    students = Student.query.all()
-    return render_template("student_list.html", students=students, user=current_user)
+    if request.method == 'GET':
+        students = Student.query.all()
+        return render_template("student_list.html", students=students, user=current_user)
+    
+    student_id=request.form['student-id-to-delete']
+    student = Student.query.get(student_id)
+    msg = f'Deleted Student {student.first_name} {student.last_name}'
+    db.session.delete(student)
+    db.session.commit()
+    flash(msg, category='warning')
+    return redirect(url_for('views.student_list'))
 
+#Populate a student object from a request
+def student_gather(student,request):
+    student.email = request.form.get('email')
+    student.first_name = request.form.get('first_name')
+    student.last_name = request.form.get('last_name')
 
 # Student New
 @views.route('/student/new', methods=['GET','POST'])
@@ -113,20 +133,14 @@ def student_new():
     if request.method == 'GET':
         return render_template("student_edit.html", student=Student(), user=current_user)
 
-    if request.method == 'POST':
-        try:
-            student = Student(
-                first_name = request.form.get('first_name'),
-                last_name = request.form.get('last_name'),
-                email = request.form.get('email'),
-                )
-            db.session.add(student)
-            db.session.commit()
-            flash(f'Added Student {student.first_name} {student.last_name}', category='success')
-            return redirect(url_for('views.student_list'))
-        except sqlalchemy.exc.IntegrityError as ex:
-            db.session.rollback()
-            flash(f'Save Failed {type(ex)}', category='error')
+    # Delete Student
+    # ToDo: see if I can post the form to /student/delete/id instead of here
+    student = Student()
+    db.session.add(student)
+    student_gather(student,request)
+    db.session.commit()
+    flash(f'Added Student {student.first_name} {student.last_name}', category='success')
+    return redirect(url_for('views.student_list'))
 
 
 # Student Edit
@@ -137,22 +151,18 @@ def student_edit(id):
     if request.method == 'GET':
         return render_template("student_edit.html", student=student, user=current_user)
     
-    if request.method == 'POST':
-        student.email = request.form.get('email')
-        student.first_name = request.form.get('first_name')
-        student.last_name = request.form.get('last_name')
-        db.session.commit()
-        flash(f'Updated Student {student.first_name} {student.last_name}', category='success')
-        return redirect(url_for('views.student_list'))
+    student_gather(student, request)
+    flash(f'Updated Student {student.first_name} {student.last_name}', category='success')
+    return redirect(url_for('views.student_list'))
 
 
-# Student New
+# Student View
 @views.route('/student/view/<int:id>', methods=['GET'])
 @login_required
 def student_view(id):
     student = Student.query.get_or_404(id)
     if request.method == 'GET':
-        return render_template("student_view.html", student=student, user=current_user)
+        return render_template("student_edit.html", student=student, user=current_user, readonly=True)
 
 
 # Student Delete
@@ -253,6 +263,63 @@ def instrument_view(id):
     return render_template("instrument_edit.html", instrument=instrument, user=current_user)
 
 
+
+###### Checkout ##########
+
+def checkout_from_request(checkout,request):
+    try:
+        checkout.checkout_date = datetime.strptime(request.form['checkout_date'],'%Y-%m-%d')
+    except: pass
+    try:
+        checkout.due_date = datetime.strptime(request.form['due_date'],'%Y-%m-%d')
+    except: pass
+    try:
+        checkout.return_date = datetime.strptime(request.form['return_date'],'%Y-%m-%d')
+    except: pass
+    if(request.form.get('student_id') is not None):
+        checkout.student_id = request.form.get('student_id')
+    checkout.instrument_id = request.form.get('instrument_id')
+    checkout.checkout_condition_id = request.form.get('checkout_condition')
+    checkout.return_condition_id = request.form.get('return_condition')
+    checkout.return_location = request.form.get('return_location')
+    checkout.notes = request.form.get('notes')
+    return checkout
+
+
+def checkout_save(checkout,request):
+    old_checkout_date = checkout.checkout_date
+    old_return_date = checkout.return_date
+    checkout_date = None
+    due_date = None
+    return_date = None
+    try:
+        checkout_date = datetime.strptime(request.form['checkout_date'],'%Y-%m-%d')
+    except: pass
+    try:
+        due_date = datetime.strptime(request.form['due_date'],'%Y-%m-%d')
+    except: pass
+    try:
+        return_date = datetime.strptime(request.form['return_date'],'%Y-%m-%d')
+    except: pass
+
+    checkout.student_id = request.form.get('student_id')
+    checkout.instrument_id = request.form.get('instrument_id')
+    checkout.checkout_date = checkout_date
+    checkout.due_date = due_date
+    checkout.return_date = return_date
+    checkout.checkout_condition_id = request.form.get('checkout_condition')
+    checkout.return_condition_id = request.form.get('return_condition')
+    checkout.return_location = request.form.get('return_location')
+    checkout.notes = request.form.get('notes')
+    db.session.commit()
+    if old_checkout_date is None and checkout_date is not None:
+        flash(f'{checkout.student.first_name} {checkout.student.last_name} checked out {checkout.instrument.tag}:{checkout.instrument.type.name}', category='success')
+    elif old_return_date is None and return_date is not None:
+        flash(f'{checkout.student.first_name} {checkout.student.last_name} returned {checkout.instrument.tag}:{checkout.instrument.type.name}', category='success')
+    else:
+        flash(f'Instrument checkout updated: {old_return_date},{return_date}', category='success')
+    return checkout
+
 # Checkouts
 @views.route('/checkouts', methods=['GET','POST'])
 @login_required
@@ -260,53 +327,83 @@ def checkout_list():
     students = Student.query.all()
     return render_template("checkout_list.html",students=students, user=current_user)    
 
-
 # Checkout Edit
 @views.route('/checkout/edit/<int:id>', methods=['GET','POST'])
 @login_required
 def checkout_edit(id):
     checkout = StudentInstrument.query.get_or_404(id)
-    instruments = Instrument.query.all()
-    students = Student.query.all()
-    instrument_conditions = InstrumentCondition.query.all()
+    semester = Semester.query.filter(
+        datetime.now() >= Semester.earliest_checkout_date,
+        datetime.now() <= Semester.latest_due_date 
+        ).first()
+
     if request.method == 'GET':
         return render_template(
             "checkout_edit.html", 
-            checkout=checkout, 
-            instruments = instruments,
-            students = students,
-            instrument_conditions = instrument_conditions,
-            user=current_user)
+            checkout = checkout, 
+            semester = semester,
+            instruments = Instrument.query.all(),
+            students = Student.query.all(),
+            instrument_conditions = InstrumentCondition.query.all(),
+            user = current_user)
+
     if request.method == 'POST':
         old_checkout_date = checkout.checkout_date
         old_return_date = checkout.return_date
-        checkout_date = None
-        due_date = None
-        return_date = None
-        try:
-            checkout_date = datetime.strptime(request.form['checkout_date'],'%Y-%m-%d')
-        except: pass
-        try:
-            due_date = datetime.strptime(request.form['due_date'],'%Y-%m-%d')
-        except: pass
-        try:
-            return_date = datetime.strptime(request.form['return_date'],'%Y-%m-%d')
-        except: pass
-
-        checkout.student_id = request.form.get('student_id')
-        checkout.instrument_id = request.form.get('instrument_id')
-        # checkout.checkout_date = checkout_date
-        # checkout.due_date = due_date
-        # checkout.return_date = return_date
-        checkout.checkout_condition_id = request.form.get('checkout_condition')
-        checkout.return_condition_id = request.form.get('return_condition')
-        checkout.return_location = request.form.get('return_location')
-        checkout.notes = request.form.get('notes')
-        db.session.commit()
-        if old_checkout_date is None and checkout_date is not None:
-            flash(f'{checkout.student.first_name} {checkout.student.last_name} checked out {checkout.instrument.tag}:{checkout.instrument.type.name}', category='success')
-        elif old_return_date is None and return_date is not None:
-            flash(f'{checkout.student.first_name} {checkout.student.last_name} returned {checkout.instrument.tag}:{checkout.instrument.type.name}', category='success')
+        checkout = checkout_from_request(checkout, request)
+        db.session.commit()        
+        if old_checkout_date is None and checkout.checkout_date is not None:
+            flash(f'{checkout.student.first_name} {checkout.student.last_name} checked out {checkout.instrument.type.name} {checkout.instrument.tag}', category='success')
+        elif old_return_date is None and checkout.return_date is not None:
+            flash(f'{checkout.student.first_name} {checkout.student.last_name} returned {checkout.instrument.type.name} {checkout.instrument.tag}', category='success')
         else:
-            flash(f'Instrument checkout updated: {old_return_date},{return_date}', category='success')
+            flash(f'Instrument checkout updated: {old_return_date},{checkout.return_date}', category='success')
+
+        return redirect(url_for('views.checkout_list'))
+
+
+# Checkout New
+@views.route('/checkout/new', methods=['GET','POST'])
+@login_required
+def checkout_new():
+    semester = Semester.query.filter(
+        datetime.now() >= Semester.earliest_checkout_date,
+        datetime.now() <= Semester.latest_due_date 
+        ).first()
+    checkout = StudentInstrument(
+        checkout_date = datetime.now(),
+        due_date = semester.latest_due_date
+    )
+
+    checked_out_instruments = StudentInstrument.query.filter(StudentInstrument.return_date is not null)
+
+    # available_instruments = Instrument.query.filter(instruments.id not in checkedout_instruments.instrument_id)
+
+    instruments = Instrument.query.filter(Instrument.id not in checked_out_instruments.instrument_id)
+    
+    # return instruments.checkouts
+
+    if request.method == 'GET':
+        return render_template(
+            "checkout_edit.html", 
+            checkout = checkout, 
+            semester = semester,
+            instruments = instruments,
+            students = Student.query.all(),
+            instrument_conditions = InstrumentCondition.query.all(),
+            user = current_user)
+
+    if request.method == 'POST':
+        checkout = checkout_from_request(checkout, request)
+        db.session.add(checkout)
+        db.session.commit()
+        # checkout = StudentInstrument.query.get_or_404(id)
+
+        if checkout.checkout_date is not None:
+            flash(f'{checkout.student.first_name} {checkout.student.last_name} checked out {checkout.instrument.type.name} {checkout.instrument.tag}', category='success')
+        elif checkout.return_date is not None:
+            flash(f'{checkout.student.first_name} {checkout.student.last_name} returned {checkout.instrument.type.name} {checkout.instrument.tag}', category='success')
+        else:
+            flash(f"{checkout.student.first_name} {checkout.student.last_name}'s check out of {checkout.instrument.type.name} {checkout.instrument.tag} updated", category='success')
+
         return redirect(url_for('views.checkout_list'))

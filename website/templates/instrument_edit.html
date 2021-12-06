@@ -181,17 +181,37 @@
   <br />
   <button type="submit" class="btn btn-primary col-md-1">Submit</button>
 </form>
-<br/>
-
-<h4>ToDo:</h4>
-<ul>
-  <li>Add a delete button</li>
-  <li>Prettify</li>
-  <li>Auth protect page</li>
-  <li>Auth protect delete</li>
-  <li>List: placeholder if none</li>
-  <li>Make a view instrument</li>
-
-</ul>
+<hr/>
+<div class="accordion" id="accordionExample">
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingOne">
+      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+        To Do List
+      </button>
+    </h2>
+    <div id="collapseOne" class="accordion-collapse collapse " aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+      <div class="accordion-body">
+        <ul>
+          <li>Edit Mode</li>
+          <ul>
+            <li>Add a delete button</li>
+            <li>confirm delete dlg</li>
+            <li>fix flash says instrument added </li>
+            <li>save fields value and notes </li>
+            <li>List</li>
+            <ul>
+              <li>Fix condition field</li>
+              <li>view, edit, delete</li>
+            </ul>
+          </ul>
+          <li>New Mode</li>
+          <ul>
+            <li>Build it</li>
+          </ul>
+      </ul>
+      </div>
+    </div>
+  </div>
+</div>
 
 {% endblock %}

@@ -1,8 +1,19 @@
 {% extends "base.html" %} {% block title %}Checkouts{% endblock %} {% block content %}
-
-<div class="container-fluid mt-4 mb-4 p-2 bg-primary text-white rounded">
-  <h3><span style="font-weight:100">List</span>&nbsp;<span style="font-weight: 700"></span>Checkouts</span></h3>
+<!-- Header -->
+<div class="d-flex bg-primary text-white rounded">
+  <div class="p-1 flex-grow-1 bd-highlight">
+    <h3><span style="font-weight:100">List</span>&nbsp;<span style="font-weight: 700"></span>Checkouts</span></h3>
+  </div>
+  <div class="p-1">
+    <div class="rounded" style="background-color:#ddd;padding:1px">
+      <a href="{{ url_for('views.checkout_new')}}" type="button" class="btn btn-outline-success" data-bs-toggle="tooltip"
+        data-bs-placement="left" title="Checkout an Instrument">
+        <span aria-hidden="true"><i class="bi bi-plus-circle"></i></span>
+      </a>
+    </div>
+  </div>
 </div>
+
 
 <table id=checkout-table class='table table-striped'>
   <thead id="table-head">
@@ -41,4 +52,29 @@
     {% endfor %}
   </tbody>
 </table>
+<br />
+<div class="accordion" id="accordionExample">
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingOne">
+      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+        To Do List
+      </button>
+    </h2>
+    <div id="collapseOne" class="accordion-collapse collapse " aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+      <div class="accordion-body">
+        <ul>
+          <li>Auth protect page</li>
+          <li>List</li>
+            <ul>
+              <li>replace "Return" with view, edit, delete</li>
+              <li>overdue notice</li>
+              <li>Sort</li>
+              <li>Filter</li>
+            </ul>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

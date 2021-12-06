@@ -34,72 +34,91 @@
       <td>{{ student.email}}</td>
       <td>
         {% for checkout in student.checkouts%}
-        <a href="{{ url_for('views.checkout_edit', id=checkout.id)}}">{{ checkout.instrument.tag}}:{{ checkout.instrument.type.name }}</a>
+        <a href="{{ url_for('views.checkout_edit', id=checkout.id)}}">{{ checkout.instrument.tag}}:{{
+          checkout.instrument.type.name }}</a>
         {% endfor %}
       </td>
-
-
-
       <td style="text-align:right">
-        <a href="{{ url_for('views.student_view',id=student.id)}}" type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="View">
+        <a href="{{ url_for('views.student_view',id=student.id)}}" type="button" class="btn btn-outline-success btn-sm"
+          data-bs-toggle="tooltip" data-bs-placement="top" title="View">
           <span aria-hidden="true"><i class="bi bi-eye"></i></span>
         </a>
-
-        <a href="{{ url_for('views.student_edit',id=student.id)}}" type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit">
+        <a href="{{ url_for('views.student_edit',id=student.id)}}" type="button" class="btn btn-outline-warning btn-sm"
+          data-bs-toggle="tooltip" data-bs-placement="top" title="Edit">
           <span aria-hidden="true"><i class="bi bi-pencil"></i></span>
         </a>
 
-        <button type="button" onClick="deleteStudent({{ student.id }})" class="btn btn-outline-danger btn-sm"  data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
-          <span><i class="bi bi-x-circle"></i></span>
-        </button>
+        <span class="rounded" class="btn-sm" style="background-color:#ddd;padding:1px" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
+          <button type="button" value='{ "id":{{ student.id }},"name":"{{student.first_name}} {{student.last_name}}" }' 
+            name=delete_student class="btn btn-outline-danger btn-sm" 
+            s title="Delete">
+            <span><i class="bi bi-x-circle"></i></span>
+          </button>
+        </span>
       </td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 
-<div id="confirm_delete" class="modal">
-  <div class="modal-body">
-    Are you sure?
+
+<!-- <div class="modal fade" id="confirm-delete" aria-hidden="true" aria-labelledby="modal-title">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id=modal-title>Delete <span id='modal-title-person-name'>{student.first_name}</span>?
+        </h5>
+        <button type=button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete <span id='modal-body-person-name'>{student.first_name}</span>?
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close">Cancel</button>
+        <form method="post" id="item-delete-form">
+          <button id='modal-delete-button' type="submit" class="btn btn-danger" value=42>Delete</button>
+          <input id=student-id-to-delete name=student-id-to-delete type=text value="?">
+        </form>
+      </div>
+    </div>
   </div>
-  <div class="modal-footer">
-    <button type="button" data-dismiss="modal" class="btn btn-primary" id="delete">Delete</button>
-    <button type="button" data-dismiss="modal" class="btn" id="cancel">Cancel</button>
+</div> -->
+
+
+<!-- Confirm Delete Modal -->
+<div class="modal fade" id="confirm-delete" aria-hidden="true" aria-labelledby="modal-title">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id=modal-title>Delete <span id='modal-title-person-name'>student.first_name</span>?</h5>
+        <button type=button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete <span id='modal-body-person-name'>{student.first_name}</span>?
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close">Cancel</button>
+        <form method="post" id="item-delete-form">
+          <button id='modal-delete-button' type="submit" class="btn btn-danger" value=42>Delete</button>
+          <input id=student-id-to-delete name=student-id-to-delete type=hidden value="?">
+        </form>
+      </div>
+    </div>
   </div>
 </div>
-<br/>
-<h4>ToDo:</h4>
-<ul>
-  <li>List: Delete are you sure</li>
-  <li>List: Flash on delete fail w/ meaningful msg</li>
-  <li>List: Auth protect delete and edit</li>
-  <li>List: Sort</li>
-  <li>List: Search</li>
-  <li><del>Add Student: Float right</del></li>
-  <li><del>Add Student: Links to student_new</del></li>
-  <li><del>Add Student: Style the button</li>
-  <li><del>List: View Student Button</del></li>
-  <li><del>List: Edit Student Button</del></li>
-  <li><del>List: Delete Student Button</del></li>
-  <li><del>List: Flash on delete success w/ message</del></li>
-</ul>
 
+
+{% endblock %}
+
+{% block scripts %}
 <script>
-  // $('button[name="remove_levels"]').on('click', function (e) {
-  //   var $form = $(this).closest('form');
-  //   e.preventDefault();
-  //   $('#confirm_delete').modal({
-  //     backdrop: 'static',
-  //     keyboard: false
-  //   })
-  //     .on('click', '#delete', function (e) {
-  //       deleteStudent(9)
-  //     });
-  //   $("#cancel").on('click', function (e) {
-  //     e.preventDefault();
-  //     $('#confirm_delete').modal.model('hide');
-  //   });
-  // });
+  $('button[name="delete_student"]').on('click', function (e) {
+    var student = JSON.parse(this.value);
+    var myModal = new bootstrap.Modal(document.getElementById('confirm-delete'));
+    document.getElementById('modal-title-person-name').innerHTML = student.name;
+    document.getElementById('modal-body-person-name').innerHTML = student.name;
+    document.getElementById('student-id-to-delete').value = student.id
+    myModal.show();
+  });
 </script>
-
 {% endblock %}

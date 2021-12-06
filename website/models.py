@@ -1,9 +1,11 @@
+from os import name
 from sqlalchemy.sql.expression import column
 from . import db
 from flask_user import UserMixin
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
+from datetime import datetime, timedelta 
 
 class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -37,7 +39,7 @@ class Student(db.Model):
     __tablename__ = 'students'
     id= db.Column( db.Integer, primary_key=True)
     checkouts = relationship("StudentInstrument",back_populates="student")
-    email =  db.Column( db.String(150), unique=True)
+    email =  db.Column( db.String(150))
     first_name =  db.Column( db.String(150))
     last_name =  db.Column( db.String(150))
     notes =  db.Column( db.String(150))
@@ -74,7 +76,6 @@ class InstrumentSize(db.Model):
     instruments   = relationship(Instrument, back_populates='size')
     name          = db.Column(db.String)
 
-
 class InstrumentStatus(db.Model):
     __tablename__ = 'instrument_statuses'
     id            = db.Column( db.Integer, primary_key=True)
@@ -91,8 +92,6 @@ class StudentInstrument(db.Model):
     return_condition_id     = db.Column(db.Integer, db.ForeignKey('instrument_conditions.id'))
     student                 = relationship("Student",back_populates="checkouts")
     instrument              = relationship("Instrument",back_populates="checkouts")
-    # checkout_condition      = relationship("InstrumentCondition",foreign_keys=[])
-    # return_condition        = relationship("InstrumentCondition",back_populates="checkout_return_conditions")
     checkout_condition      = relationship("InstrumentCondition", foreign_keys=[checkout_condition_id])
     return_condition        = relationship("InstrumentCondition", foreign_keys=[return_condition_id])
     checkout_date           = db.Column(db.Date)
@@ -101,9 +100,52 @@ class StudentInstrument(db.Model):
     return_location         = db.Column(db.String(100))
     notes                   = db.Column(db.String(1000))
 
+    @classmethod
+    def from_request(cls, request):
+        return cls
+
+    # def __init__(self, request):
+    #     try:
+    #         self.checkout_date = datetime.strptime(request.form['checkout_date'],'%Y-%m-%d')
+    #     except: pass
+    #     try:
+    #         self.due_date = datetime.strptime(request.form['due_date'],'%Y-%m-%d')
+    #     except: pass
+    #     try:
+    #         self.return_date = datetime.strptime(request.form['return_date'],'%Y-%m-%d')
+    #     except: pass
+    #     self.student_id = request.form.get('student_id')
+    #     self.instrument_id = request.form.get('instrument_id')
+    #     self.checkout_condition_id = request.form.get('checkout_condition')
+    #     self.return_condition_id = request.form.get('return_condition')
+    #     self.return_location = request.form.get('return_location')
+    #     self.notes = request.form.get('notes')
+
+
 class InstrumentCondition(db.Model):
     __tablename__ = 'instrument_conditions'
     id            = db.Column( db.Integer, primary_key=True)
     instruments   = relationship(Instrument, back_populates='condition')
     name          = db.Column(db.String)
+
+class Semester(db.Model):
+    __tablename__ = 'semesters'
+    id            = db.Column(db.Integer, primary_key=True)
+    name          = db.Column(db.String)
+    first_class_date = db.Column(db.Date)
+    last_class_date  = db.Column(db.Date)
+    earliest_checkout_date = db.Column(db.Date)
+    latest_due_date = db.Column(db.Date)
+
+
+    # @classmethod
+    # def get_for_date(cls, **kw):
+    #     obj = cls(**kw)
+    #     db.session.add(obj)
+    #     db.session.commit()
+
+    # def for_date(cls, date):
+    #     return Session.query(Users).filter(Users.id==userid).first()
+
+
 

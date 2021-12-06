@@ -1,119 +1,107 @@
 {% extends "base.html" %} {% block title %}Student{% endblock %} {% block
 content %}
 
-<!-- <div class="d-flex bg-primary text-white rounded">
-  <div class="p-1 flex-grow-1 bd-highlight">
-    <h3>
-      <span style="font-weight:100">{% if student.id is none %} New {% else %} Edit {% endif %}</span>&nbsp;<span
-        style="font-weight: 700"></span>Student</span></h3>
-  </div>
-</div> -->
-
-<div class="d-flex bg-primary text-white rounded">
-  <div class="p-1 flex-grow-1 bd-highlight">
-    <h3>
+<div class="d-flex justify-content-between bg-primary text-white rounded">
+  <div class="p-2">
+    <h3 >
       <span style="font-weight:100">
-        {% if student.id is none %} New {% else %} Edit {% endif %}
-      </span>
-      <span style="font-weight: 700">Student</span></h3>
+        {% if readonly==True %}
+          View
+        {% elif student.id %}
+          Edit
+        {% else %}
+          New
+        {% endif %}</span>
+      <span style="font-weight: 700">Student</span>
+    </h3>
   </div>
-  {% if student.id is not none %}
-  <div class="p-1">
-    <div class="rounded" style="background-color:#ddd;padding:1px">
-      <button type="button" onClick="deleteStudent({{ student.id }})" class="btn btn-outline-danger"  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete this student">
-        <span><i class="bi bi-x-circle"></i></span>
-      </button>
-      </a>
+  {% if student.id is not none and readonly != true%}
+  <div class="p-2 bg-primary">
+    <div class="bd-highlight">
+      <div class="rounded" data-bs-toggle="tooltip" data-bs-placement="left" style="background-color:#ddd;padding:1px" title="Delete Student">
+        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#confirm-delete" >
+          <span><i class="bi bi-x-circle"></i></span>
+        </button>
+      </div>
     </div>
   </div>
   {% endif %}
 </div>
-
-
-
-<form class="row g-3" disabled="disabled" method="POST">
-
-
-
+<br/>
+<form class="row g-3" style='background-color: #eee;' method="POST">
+  {% if readonly==true %}
+ 
+  <fieldset disabled="disabled" class="row g-3" >
+  {% endif %}
 
   <!-- First Name -->
-  <div class="col-md-6 form-group required">
-    <label for="first_name_group" class="col-form-label">First Name</label>
-    <div class="input-group" id=first_name_group>
-      <span class="input-group-text">
-        <i class="bi bi-person-fill"></i>
-      </span>
-      <input required type="text" class="form-control" id="first_name" name="first_name"
+  <div class="col-md-6 required">
+    <div class="form-floating mb-3">
+      <input type="text" required class="form-control" id="first_name" name="first_name"
         value="{% if student.first_name %}{{student.first_name}}{% endif %}" />
+      <label for="first_name">First Name*</label>
     </div>
   </div>
 
   <!-- Last Name -->
-  <div class="col-md-6 form-group required">
-    <label for="last_name_group" class="col-form-label">Last Name</label>
-    <div class="input-group" id=first_name_group>
-      <span class="input-group-text">
-        <i class="bi bi-person-fill"></i>
-      </span>
-      <input required type="text" class="form-control" id="last_name" name="last_name"
+  <div class="col-md-6 required">
+    <div class="form-floating mb-3">
+      <input type="text" required class="form-control" id="last_name" name="last_name"
         value="{% if student.last_name %}{{student.last_name}}{% endif %}" />
+      <label for="last_name">Last Name*</label>
     </div>
   </div>
 
   <!-- Email -->
-
-
-  <!-- Email -->
-  <div class="col-md-12 form-group required">
-    <label for="email_group" class="col-form-label">Email</label>
-    <div class="input-group" id=email_group>
-      <span class="input-group-text">
-        @
-      </span>
-      <input required type="text" class="form-control" id="email" name="email"
-        value="{% if student.last_name %}{{student.email}}{% endif %}" />
+  <div class="col-md-12 required">
+    <div class="form-floating mb-3">
+      <input type="email" required class="form-control" id="email" name="email"
+        value="{% if student.email %}{{student.email}}{% endif %}" />
+      <label for="email">Email*</label>
     </div>
   </div>
 
   {% if student.id %}
-
   <!-- Checkouts -->
   <div class="col-md-12 form-group required">
+    <h5> Checkout History</h5>
     <table id=student-table class='table table-striped'>
-      <thead id="table-head">
-        <tr>
-          <th colspan=4>Instrument Checkouts</th>
-          <th colspan=2 style="text-align:right;">New</th>
-        </tr>
-        <tr>
-          <th>Checked Out</th>
-          <th>Tag</th>
-          <th>Type</th>
-          <th>Out Condition</th>
+      <thead id="table-head" class='bg-secondary text-white '>
+        <tr style='vertical-align: middle; '>
+          <th >Checked Out</th>
+          <th >Tag</th>
+          <th class="d-none d-sm-table-cell">Type</th>
+          <th class="d-none d-md-table-cell"> Out Condition</th>
           <th>Due</th>
           <th>Returned</th>
-          <th>Due</th>
-          <th>In Condition</th>
-          <th>Returned To</th>
-          <th>Notes</th>
-          <th>?</th>
-
+          <th class="d-none d-md-table-cell">In Condition</th>
+          <th class="d-none d-md-table-cell">Returned To</th>
+          <th class="d-none d-md-table-cell">Notes</th>
+          <th style="width:0%; padding:0;">
+            <div class="p-1" >
+              <div class="rounded" style="background-color:#eee;padding:1px">
+                <a href="{{ url_for('views.checkout_new')}}" type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="tooltip" title="Checkout An Instrument">
+                  <span aria-hidden="true"><i class="bi bi-plus-circle"></i></span>
+                </a>
+              </div>
+            </div>
+          </th>
         </tr>
       </thead>
       <tbody id="table-body">
         {% for checkout in student.checkouts %}
         <tr>
-          <td>{{ checkout.checkout_date }}</td>
+          <td style="white-space:nowrap">{{ checkout.checkout_date }}</td>
           <td><b><a style="text-decoration-line:none"
                 href="{{ url_for('views.instrument_edit', id=checkout.instrument.id)}}">{{ checkout.instrument.tag
                 }}</a></b></td>
-          <td>{{ checkout.instrument.type.name }}</a></td>
-          <td>{{ checkout.checkout_condition }}</td>
+          <td class="d-none d-sm-table-cell">{{ checkout.instrument.type.name }}</a></td>
+          <td class="d-none d-md-table-cell">{{ checkout.checkout_condition.name }}</td>
           <td>{{ checkout.due_date }}</td>
           <td>{{ checkout.return_date }}</td>
-          <td>{{ checkout.return_condition }}</td>
-          <td>{{ checkout.return_location }}</td>
-          <td>{{ checkout.Notes }}</td>
+          <td class="d-none d-md-table-cell">{{ checkout.return_condition.name }}</td>
+          <td class="d-none d-md-table-cell">{{ checkout.return_location }}</td>
+          <td class="d-none d-md-table-cell">{{ checkout.Notes }}</td>
           <td><b><a style="text-decoration-line:none" href="{{ url_for('views.checkout_edit',id=checkout.id)}}">Return</a></b></td>
         </tr>
         {% endfor %}
@@ -122,23 +110,83 @@ content %}
   </div>
   {% endif %}
 
+  {% if readonly==true %}
+  <fieldset disabled="disabled">
+  {% else %}
   <br />
   <div class="col-md-2 form-group ">
     <button type="submit" class="btn btn-primary">Submit</button>
   </div>
-</form>
-<br/>
-<h4>ToDo:</h4>
-<ul>
-  <li>Edit Mode: Add a delete button</li>
-  <li>Add Mode: Flash a nice message</li>
-  <li>Prettify</li>
-  <li>Add more fields</li>
-  <li>Auth protect page</li>
-  <li>Auth protect delete</li>
-  <li>List: placeholder if none</li>
-  <li>Try floating label</li>
-  <li><del>Google API to sync with google sheets</del></li>
-</ul>
+  {% endif %}
+ </form>
 
+
+ <!-- Launch modal -->
+
+<!-- Confirm Delete Modal -->
+<div class="modal fade" id="confirm-delete" aria-hidden="true" aria-labelledby="modal-title">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title modal-title" id=modal-title>Delete {{student.first_name}}</h5>
+        <button type=button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <!-- <div class="modal-title">
+        yada
+      </div> -->
+      <div class="modal-body">
+        Are you sure you want to delete {{student.first_name}}?
+      </div>
+      <div class="modal-footer">
+        <button onClick="deleteStudent({{ student.id }})" class="btn btn-danger">Delete</button>
+        <button class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<br/>
+<div class="accordion" id="accordionExample">
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingOne">
+      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+        To Do List
+      </button>
+    </h2>
+    <div id="collapseOne" class="accordion-collapse collapse " aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+      <div class="accordion-body">
+        <ul>
+          <li>Edit Mode</li>
+            <ul>
+              <li><del>Add a delete button</del></li>
+              <li><del>confirm delete dlg</del></li>
+            </ul>
+            <li>New Mode</li>
+            <ul>
+              <li><del>Make it work</del></li>
+              <li><del>Flash a nice message</del></li>
+            </ul>
+            <li>List</li>
+            <ul>
+              <li><del>fix condition field</del></li>
+            </ul>
+          <li><del>Convert to floating labels</del></li>
+          <li>add Notes field</li>
+          <li><del>email validator</del></li>
+          <li>flash warning if email also used by ___ </li>
+          <li>Add fields as necessary</li>
+          <li>Auth protect page</li>
+          <li>Auth protect delete</li>
+          <li>List: placeholder if none</li>
+          <li>Import from Google Sheets</li>
+          <ul>
+            <li>Enable Google API</li>
+          </ul>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

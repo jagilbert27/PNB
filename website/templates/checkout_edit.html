@@ -63,7 +63,7 @@
    <!-- Return Due Date -->
    <div class="col-md-4 required">
     <div class="form-floating mb-3">
-      <input type='date' class="form-control" name=due_date id=due_date value="{{ checkout.due_date }}">
+      <input type='date' class="form-control" name=due_date id=due_date value= checkout.due_date>
       <label for=due_date >Due Date</label>
     </div>
   </div>
@@ -104,6 +104,16 @@
     </div>
   </div>
 
+  <!-- Location -->
+  <div class="col-md-4 required">
+    <div class="form-floating mb-3">
+      <input type="text" readonly class="form-control readonly" id=semester name=semester placeholder="Ex: ABC123"
+        value="{% if semester.name %}{{ semester.name }}{% endif %} default due date: {{semester.latest_due_date}}">
+      <label for=return_location>Semester</label>
+    </div>
+  </div>
+
+
   <!-- Notes -->
   <div class="col-md-12 required">
     <div class="form-floating mb-3">
@@ -117,19 +127,23 @@
   </div>
 </form>
 
-<h3>ToDo:</h3>
-<ul>
-  <li>☑ create form fields</li>
-  <li>☑ Tweak vertical alignment</li>
-  <li>☑ Add 'today' button on calendars</li>
-  <li>☑ support Create</li>
-  <li>☑ make required fields</li>
-
-  <li>☐ support Read/Update</li>
-  <li>☐ support Delete</li>
-
-  <li>☐ Add 'new' button on student?</li>
-  <li>☐ Add 'new' button on instrument?</li>
-</ul>
-
+<div class="accordion" id="accordionExample">
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingOne">
+      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+        To Do List
+      </button>
+    </h2>
+    <div id="collapseOne" class="accordion-collapse collapse " aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+      <div class="accordion-body">
+        <ul>
+          <li>List</li>
+          <ul>
+            <li>Overdue warning</li>
+          </ul>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
