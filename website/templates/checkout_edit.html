@@ -52,6 +52,7 @@
   <div class="col-md-4 required">
     <div class="form-floating">
       <select class="form-select" name=checkout_condition id=checkout_condition aria-label="Floating label select example">
+        <option disabled {% if checkout.checkout_condition_id is none %} selected {% endif %}>Select...</option>
         {% for condition in instrument_conditions %}
         <option {% if condition.id == checkout.checkout_condition.id %} selected {% endif %} value="{{condition.id}}">{{condition.name}}</option>
         {% endfor %}
@@ -63,7 +64,7 @@
    <!-- Return Due Date -->
    <div class="col-md-4 required">
     <div class="form-floating mb-3">
-      <input type='date' class="form-control" name=due_date id=due_date value= checkout.due_date>
+      <input type='date' class="form-control" name=due_date id=due_date value="{{ checkout.due_date }}">
       <label for=due_date >Due Date</label>
     </div>
   </div>
@@ -76,19 +77,13 @@
     </div>
   </div>
 
-  <div class="col-md-4 required">
-    <div class="form-floating">
-      <input type="text" class="date form-select" id=return_date name=return_date value="{{ checkout.return_date }}">
-      <label for="return_date">Return Date</label>
-    </div>
-  </div>
- 
   <!-- Return Condition -->
   <div class="col-md-4 required">
     <div class="form-floating">
       <select class="form-select" name=return_condition id=return_condition aria-label="Floating label select example">
+        <option disabled {% if checkout.checkout_condition_id is none %} selected {% endif %}>Select...</option>
         {% for condition in instrument_conditions %}
-        <option {% if condition.id == checkout.return_condition.id %} selected {% endif %} value="{{condition.id}}">{{condition.name}}</option>
+        <option {% if condition.id == checkout.return_condition_id %} selected {% endif %} value="{{condition.id}}">{{condition.name}}</option>
         {% endfor %}
       </select>
       <label for="return_condition">Return Condition</label>

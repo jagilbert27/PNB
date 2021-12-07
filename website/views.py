@@ -1,9 +1,11 @@
+from operator import or_
 from re import X
 from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for
 from flask_login import login_required, current_user
 from flask_user import current_user, login_required, roles_required, UserMixin
 from sqlalchemy.sql.elements import Null
-from sqlalchemy.sql.expression import desc, null, select, true
+from sqlalchemy.sql.expression import desc, null, select, text, true
+from sqlalchemy.orm import load_only
 
 from .models import Note, Student, Instrument, StudentInstrument, InstrumentType, InstrumentSize, InstrumentCondition, InstrumentStatus, Role, UserRoles, Semester
 from . import db
@@ -231,6 +233,7 @@ def instrument_edit(id):
         instrument.tag = request.form.get('instrument_tag')
         instrument.type_id = request.form.get('instrument_type')
         instrument.size_id = request.form.get('instrument_size')
+        instrument.status_id = request.form.get('instrument_status')
         instrument.serial = request.form.get('instrument_serial')
         instrument.brand = request.form.get('instrument_brand')
         instrument.model = request.form.get('instrument_brand')
@@ -332,6 +335,7 @@ def checkout_list():
 @login_required
 def checkout_edit(id):
     checkout = StudentInstrument.query.get_or_404(id)
+    available_instruments = Instrument.query.filter(or_(Instrument.status_id == 1, Instrument.id == checkout.instrument_id))
     semester = Semester.query.filter(
         datetime.now() >= Semester.earliest_checkout_date,
         datetime.now() <= Semester.latest_due_date 
@@ -342,7 +346,7 @@ def checkout_edit(id):
             "checkout_edit.html", 
             checkout = checkout, 
             semester = semester,
-            instruments = Instrument.query.all(),
+            instruments = available_instruments,
             students = Student.query.all(),
             instrument_conditions = InstrumentCondition.query.all(),
             user = current_user)
@@ -351,13 +355,23 @@ def checkout_edit(id):
         old_checkout_date = checkout.checkout_date
         old_return_date = checkout.return_date
         checkout = checkout_from_request(checkout, request)
+        db.session.add(checkout)
+
+        # Update the instrument record to reflect the checkout status
+        instrument = Instrument.query.get(checkout.instrument_id)
+        if checkout.checkout_date is not None and checkout.return_date is None:
+            instrument.status_id = 2
+        elif checkout.return_date is not None:
+            instrument.status_id = 1
+        db.session.add(instrument)
         db.session.commit()        
+
         if old_checkout_date is None and checkout.checkout_date is not None:
             flash(f'{checkout.student.first_name} {checkout.student.last_name} checked out {checkout.instrument.type.name} {checkout.instrument.tag}', category='success')
         elif old_return_date is None and checkout.return_date is not None:
             flash(f'{checkout.student.first_name} {checkout.student.last_name} returned {checkout.instrument.type.name} {checkout.instrument.tag}', category='success')
         else:
-            flash(f'Instrument checkout updated: {old_return_date},{checkout.return_date}', category='success')
+            flash('Instrument checkout record updated.', category='success')
 
         return redirect(url_for('views.checkout_list'))
 
@@ -366,29 +380,22 @@ def checkout_edit(id):
 @views.route('/checkout/new', methods=['GET','POST'])
 @login_required
 def checkout_new():
+    available_instruments = Instrument.query.filter_by(status_id = 1)
     semester = Semester.query.filter(
         datetime.now() >= Semester.earliest_checkout_date,
         datetime.now() <= Semester.latest_due_date 
         ).first()
     checkout = StudentInstrument(
-        checkout_date = datetime.now(),
-        due_date = semester.latest_due_date
+        checkout_date = datetime.strftime(datetime.now(),'%Y-%d-%m'),
+        due_date = datetime.strftime(semester.latest_due_date,'%Y-%d-%m')
     )
-
-    checked_out_instruments = StudentInstrument.query.filter(StudentInstrument.return_date is not null)
-
-    # available_instruments = Instrument.query.filter(instruments.id not in checkedout_instruments.instrument_id)
-
-    instruments = Instrument.query.filter(Instrument.id not in checked_out_instruments.instrument_id)
-    
-    # return instruments.checkouts
 
     if request.method == 'GET':
         return render_template(
             "checkout_edit.html", 
             checkout = checkout, 
             semester = semester,
-            instruments = instruments,
+            instruments = available_instruments,
             students = Student.query.all(),
             instrument_conditions = InstrumentCondition.query.all(),
             user = current_user)
@@ -396,14 +403,26 @@ def checkout_new():
     if request.method == 'POST':
         checkout = checkout_from_request(checkout, request)
         db.session.add(checkout)
-        db.session.commit()
-        # checkout = StudentInstrument.query.get_or_404(id)
+        try:
+            db.session.commit()
+        except sqlalchemy.exc.IntegrityError:
+            flash(f' {checkout.instrument.type.name} {checkout.instrument.tag} is already checked out to {checkout.student.first_name} {checkout.student.last_name}', category='danger')
+            return redirect(url_for('views.checkout_edit'))
 
-        if checkout.checkout_date is not None:
-            flash(f'{checkout.student.first_name} {checkout.student.last_name} checked out {checkout.instrument.type.name} {checkout.instrument.tag}', category='success')
+        # Update the instrument record to reflect the checkout status
+        instrument = Instrument.query.get(checkout.instrument_id)
+        if checkout.checkout_date is not None and checkout.return_date is None:
+            instrument.status_id = 2
         elif checkout.return_date is not None:
+            instrument.status_id = 1
+        db.session.add(instrument)
+        db.session.commit()
+
+        if checkout.checkout_date is not None and checkout.return_date is not None:
             flash(f'{checkout.student.first_name} {checkout.student.last_name} returned {checkout.instrument.type.name} {checkout.instrument.tag}', category='success')
+        elif checkout.checkout_date is not None:
+            flash(f'{checkout.student.first_name} {checkout.student.last_name} checked out {checkout.instrument.type.name} {checkout.instrument.tag}', category='success')
         else:
-            flash(f"{checkout.student.first_name} {checkout.student.last_name}'s check out of {checkout.instrument.type.name} {checkout.instrument.tag} updated", category='success')
+            flash('Instrument checkout record updated.', category='success')
 
         return redirect(url_for('views.checkout_list'))
