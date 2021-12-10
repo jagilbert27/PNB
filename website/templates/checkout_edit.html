@@ -8,17 +8,40 @@
 }
 </style>
 
-<div class="container-fluid mt-4 mb-4 p-2 bg-primary text-white rounded">
-  <h3><span style="font-weight:100">Checkout</span>&nbsp;<span style="font-weight: 700"></span>Instrument</span></h3>
+<div class="d-flex justify-content-between bg-primary text-white rounded">
+  <div class="p-2">
+    <h3 >
+      <span style="font-weight:100">
+        {% if readonly==True %}
+          View
+        {% elif checkout.id %}
+          Edit
+        {% else %}
+          New
+        {% endif %}</span>
+      <span style="font-weight: 700">Checkout</span>
+    </h3>
+  </div>
+  {% if checkout.id is not none and readonly != true%}
+  <div class="p-2 bg-primary">
+    <div class="bd-highlight">
+      <div class="rounded" data-bs-toggle="tooltip" data-bs-placement="left" style="background-color:#ddd;padding:1px" title="Delete Checkout">
+        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#confirm-delete" >
+          <span><i class="bi bi-x-circle"></i></span>
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 </div>
-
+<br>
 <form class="row g-3" method="POST">
 
   <!-- Student -->
   <div class="col-md-6 required">
     <div class="form-floating">
-      <select class="form-select" name=student_id id=student_id >
-        <option>Select Student</option>
+      <select required class="form-select" name=student_id id=student_id >
+        <option value=''>Select Student</option>
         {% for student in students %}
         <option {% if student.id == checkout.student_id %} selected {% endif %} value="{{student.id}}">{{ student.first_name }} {{student.last_name }}</option>
         {% endfor %}
@@ -30,10 +53,12 @@
   <!-- Instrument -->
   <div class="col-md-6 required">
     <div class="form-floating">
-      <select class="form-select" name=instrument_id id=instrument_id >
-        <option>Select Instrument</option>
+      <select required class="form-select" name=instrument_id id=instrument_id >
+        <option value=''>Select Instrument</option>
         {% for instrument in instruments %}
-        <option {% if instrument.id == checkout.instrument_id %} selected {% endif %} value="{{instrument.id}}">{{ instrument.tag }}: {{instrument.type.name }}</option>
+        <option {% if instrument.id == checkout.instrument_id %} selected {% endif %} 
+          data-condition_id="{{ instrument.condition_id }}"
+          value="{{instrument.id}}">{{ instrument.tag }}: {{instrument.type.name }}, ({{instrument.condition.name}} condition)</option>
         {% endfor %}
       </select>
       <label for="instrument_id">Instrument</label>
@@ -72,7 +97,7 @@
   <!-- Return Date -->
   <div class="col-md-4 required">
     <div class="form-floating mb-3">
-      <input type='date' class="form-control" name=return_date id=return_date>
+      <input type='date' class="form-control" name=return_date id=return_date value="{{ checkout.return_date }}">
       <label for=return_date >Return Date</label>
     </div>
   </div>
@@ -81,7 +106,7 @@
   <div class="col-md-4 required">
     <div class="form-floating">
       <select class="form-select" name=return_condition id=return_condition aria-label="Floating label select example">
-        <option disabled {% if checkout.checkout_condition_id is none %} selected {% endif %}>Select...</option>
+        <option disabled {% if checkout.return_condition_id is none %} selected {% endif %}>Select...</option>
         {% for condition in instrument_conditions %}
         <option {% if condition.id == checkout.return_condition_id %} selected {% endif %} value="{{condition.id}}">{{condition.name}}</option>
         {% endfor %}
@@ -94,12 +119,12 @@
   <div class="col-md-4 required">
     <div class="form-floating mb-3">
       <input type="text" class="form-control" id=return_location name=return_location placeholder="Ex: ABC123"
-        value="{% if checkout.location %}{{ checkout.location }}{% endif %}">
+        value="{% if checkout.return_location %}{{ checkout.return_location }}{% endif %}">
       <label for=return_location>Location</label>
     </div>
   </div>
 
-  <!-- Location -->
+  <!-- Semester info -->
   <div class="col-md-4 required">
     <div class="form-floating mb-3">
       <input type="text" readonly class="form-control readonly" id=semester name=semester placeholder="Ex: ABC123"
@@ -107,7 +132,6 @@
       <label for=return_location>Semester</label>
     </div>
   </div>
-
 
   <!-- Notes -->
   <div class="col-md-12 required">
@@ -122,6 +146,45 @@
   </div>
 </form>
 
+<!-- Confirm Delete Modal -->
+<div class="modal fade" id="confirm-delete" aria-hidden="true" aria-labelledby="modal-title">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title modal-title" id=modal-title>Delete this checkout?</h5>
+        <button type=button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete this checkout?<br/>
+        This should only be deleted if the checkout was a mistake.<br/><br/>
+        To return an instrument, tap cancel and enter a "Return Date" below
+      </div>
+      <div class="modal-footer">
+        <button onClick="deleteCheckout({{ checkout.id }})" class="btn btn-danger">Delete</button>
+        <button class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- No instruments are available Modal -->
+<div class="modal fade" id="no-data" aria-hidden="true" aria-labelledby="modal-title">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title modal-title" id=modal-title>No instruments Available?</h5>
+        <button type=button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        There are no instruments avalable for checkout.
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="accordion" id="accordionExample">
   <div class="accordion-item">
     <h2 class="accordion-header" id="headingOne">
@@ -135,10 +198,35 @@
           <li>List</li>
           <ul>
             <li>Overdue warning</li>
+            <li>init checkout condition from instrument</li>
           </ul>
         </ul>
       </div>
     </div>
   </div>
 </div>
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+$(document).ready(function() {
+  // alert('ready');
+});
+
+  $(function(){
+    $('#instrument_id').change(function(){
+      var selected = $(this).find('option:selected');
+      var condition_id = selected.data('condition_id');
+      if(condition_id) {
+        // alert("conditionid: " + selected.data('condition_id'));
+        $("#checkout_condition").val(selected.data('condition_id'));
+      }
+     }).change();
+  });
+
+</script>
+
 {% endblock %}

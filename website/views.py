@@ -1,19 +1,44 @@
+import enum
 from operator import or_
 from re import X
 from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for
 from flask_login import login_required, current_user
 from flask_user import current_user, login_required, roles_required, UserMixin
 from sqlalchemy.sql.elements import Null
-from sqlalchemy.sql.expression import desc, null, select, text, true
+from sqlalchemy.sql.expression import desc, false, null, outerjoin, select, text, true
 from sqlalchemy.orm import load_only
 
 from .models import Note, Student, Instrument, StudentInstrument, InstrumentType, InstrumentSize, InstrumentCondition, InstrumentStatus, Role, UserRoles, Semester
 from . import db
 import json
 import sqlalchemy
-from datetime import datetime, timedelta 
+from datetime import date, datetime, timedelta 
 
 views = Blueprint('views', __name__)
+
+
+class InstrumentConditions(enum.Enum):
+    New=5
+    Good=4
+    Fair=3
+    Poor=2
+    Broken=1
+
+class InstrumentStatuses(enum.Enum):
+    Available=1
+    CheckedOut=2
+    NeedsRepair=3
+    BeingRepaired=4
+    Decommisioned=5
+
+class InstrumentTypes(enum.Enum):
+    Fiddle=1
+    Guitar=2
+    Mandolin=3
+    Banjo=4
+    Bass=5
+    Ukulele=6
+
 
 @views.route('/Fill', methods=['GET', 'POST'])
 @roles_required('dev')
@@ -40,20 +65,20 @@ def fill():
     db.session.add(InstrumentType(id=5, name='Bass'))
     db.session.add(InstrumentType(id=6, name='Ukulele'))
     
-    db.session.add(InstrumentCondition(id=5, name='New'))
-    db.session.add(InstrumentCondition(id=4, name='Good'))
-    db.session.add(InstrumentCondition(id=3, name='Fair'))
-    db.session.add(InstrumentCondition(id=2, name='Poor'))
-    db.session.add(InstrumentCondition(id=1, name='Broken'))
+    db.session.add(InstrumentCondition(id=InstrumentConditions.New.value, name='New'))
+    db.session.add(InstrumentCondition(id=InstrumentConditions.Good.value, name='Good'))
+    db.session.add(InstrumentCondition(id=InstrumentConditions.Fair.value, name='Fair'))
+    db.session.add(InstrumentCondition(id=InstrumentConditions.Poor.value, name='Poor'))
+    db.session.add(InstrumentCondition(id=InstrumentConditions.Broken.value, name='Broken'))
 
-    db.session.add(InstrumentStatus(id=1, name='Available for checkout'))
-    db.session.add(InstrumentStatus(id=2, name='Checked out to Student'))
-    db.session.add(InstrumentStatus(id=3, name='Needs Repair'))
-    db.session.add(InstrumentStatus(id=4, name='Out for Repair'))
-    db.session.add(InstrumentStatus(id=5, name='Decommissioned'))
+    db.session.add(InstrumentStatus(id=InstrumentStatuses.Available.value, name='Available for checkout'))
+    db.session.add(InstrumentStatus(id=InstrumentStatuses.CheckedOut.value, name='Checked out to Student'))
+    db.session.add(InstrumentStatus(id=InstrumentStatuses.NeedsRepair.value, name='Needs Repair'))
+    db.session.add(InstrumentStatus(id=InstrumentStatuses.BeingRepaired.value, name='Out for Repair'))
+    db.session.add(InstrumentStatus(id=InstrumentStatuses.Decommisioned.value, name='Decommissioned'))
 
-    db.session.add(Instrument(type_id=1, tag='F1', condition_id=3, status_id=1 ))
-    db.session.add(Instrument(type_id=2, tag='G1', condition_id=4 ))
+    db.session.add(Instrument(type_id=InstrumentTypes.Fiddle.value, tag='F1', condition_id=InstrumentConditions.New.value, status_id=InstrumentStatuses.Available.value ))
+    db.session.add(Instrument(type_id=InstrumentTypes.Guitar.value, tag='G1', condition_id=InstrumentConditions.New.value, status_id=InstrumentStatuses.Available.value  ))
 
     db.session.add(Student(email='a@a.com',first_name='Alpha',last_name='A'))
     db.session.add(Student(email='b@b.com',first_name='Bravo',last_name='B'))
@@ -272,13 +297,17 @@ def instrument_view(id):
 def checkout_from_request(checkout,request):
     try:
         checkout.checkout_date = datetime.strptime(request.form['checkout_date'],'%Y-%m-%d')
-    except: pass
+    except: 
+        checkout.checkout_date = None
     try:
         checkout.due_date = datetime.strptime(request.form['due_date'],'%Y-%m-%d')
-    except: pass
+    except:
+        checkout.due_date = None
     try:
         checkout.return_date = datetime.strptime(request.form['return_date'],'%Y-%m-%d')
-    except: pass
+    except: 
+        checkout.return_date = None
+        
     if(request.form.get('student_id') is not None):
         checkout.student_id = request.form.get('student_id')
     checkout.instrument_id = request.form.get('instrument_id')
@@ -327,8 +356,18 @@ def checkout_save(checkout,request):
 @views.route('/checkouts', methods=['GET','POST'])
 @login_required
 def checkout_list():
-    students = Student.query.all()
-    return render_template("checkout_list.html",students=students, user=current_user)    
+    if request.method == 'GET':
+        students = Student.query.all()
+        return render_template("checkout_list.html",students=students, today=date.today(), user=current_user)    
+
+    checkout_id=request.form['id-to-delete']
+    checkout = StudentInstrument.query.get(checkout_id)
+    msg = f"Deleted {checkout.student.first_name}'s checkout of {checkout.instrument.type.name} {checkout.instrument.tag}"
+    db.session.delete(checkout)
+    db.session.commit()
+    flash(msg, category='warning')
+    return redirect(url_for('views.checkout_list'))
+
 
 # Checkout Edit
 @views.route('/checkout/edit/<int:id>', methods=['GET','POST'])
@@ -349,6 +388,7 @@ def checkout_edit(id):
             instruments = available_instruments,
             students = Student.query.all(),
             instrument_conditions = InstrumentCondition.query.all(),
+            readonly = false,
             user = current_user)
 
     if request.method == 'POST':
@@ -362,7 +402,11 @@ def checkout_edit(id):
         if checkout.checkout_date is not None and checkout.return_date is None:
             instrument.status_id = 2
         elif checkout.return_date is not None:
-            instrument.status_id = 1
+            instrument.status_id = 1        
+            if checkout.return_condition_id is not None:
+                instrument.condition_id =  checkout.return_condition_id
+            if checkout.return_location is not None:
+                instrument.location = checkout.return_location
         db.session.add(instrument)
         db.session.commit()        
 
@@ -378,16 +422,21 @@ def checkout_edit(id):
 
 # Checkout New
 @views.route('/checkout/new', methods=['GET','POST'])
+@views.route('/checkout/new/student/<int:student_id>', methods=['GET','POST'])
+@views.route('/checkout/new/instrument/<int:instrument_id>', methods=['GET','POST'])
+@views.route('/checkout/new/student/<int:student_id>/instrument/<int:instrument_id>', methods=['GET','POST'])
 @login_required
-def checkout_new():
-    available_instruments = Instrument.query.filter_by(status_id = 1)
+def checkout_new(student_id=None,instrument_id=None):
+    available_instruments = Instrument.query.filter_by(status_id = InstrumentStatuses.Available.value)
     semester = Semester.query.filter(
         datetime.now() >= Semester.earliest_checkout_date,
         datetime.now() <= Semester.latest_due_date 
         ).first()
     checkout = StudentInstrument(
         checkout_date = datetime.strftime(datetime.now(),'%Y-%d-%m'),
-        due_date = datetime.strftime(semester.latest_due_date,'%Y-%d-%m')
+        due_date = datetime.strftime(semester.latest_due_date,'%Y-%d-%m'),
+        student_id = student_id,
+        instrument_id = instrument_id
     )
 
     if request.method == 'GET':
@@ -412,11 +461,10 @@ def checkout_new():
         # Update the instrument record to reflect the checkout status
         instrument = Instrument.query.get(checkout.instrument_id)
         if checkout.checkout_date is not None and checkout.return_date is None:
-            instrument.status_id = 2
+            instrument.status_id = InstrumentStatuses.CheckedOut.value
         elif checkout.return_date is not None:
-            instrument.status_id = 1
+            instrument.status_id = InstrumentStatuses.Available.value
         db.session.add(instrument)
-        db.session.commit()
 
         if checkout.checkout_date is not None and checkout.return_date is not None:
             flash(f'{checkout.student.first_name} {checkout.student.last_name} returned {checkout.instrument.type.name} {checkout.instrument.tag}', category='success')
@@ -425,4 +473,23 @@ def checkout_new():
         else:
             flash('Instrument checkout record updated.', category='success')
 
+        db.session.commit()
+
         return redirect(url_for('views.checkout_list'))
+
+# delete checkout
+@views.route('/delete-checkout', methods=['POST'])
+def checkout_delete():
+    request_data = json.loads(request.data)
+    checkout_id = request_data['checkout_id']
+    checkout = StudentInstrument.query.get(checkout_id)
+    msg = f'Checkout Deleted'
+    if checkout:
+        try:
+            db.session.delete(checkout)
+            db.session.commit()
+            flash(msg, category='success')
+        except BaseException as ex:
+            db.session.rollback()
+            flash(f'Delete Failed {type(ex)}', category='error')
+    return jsonify({})

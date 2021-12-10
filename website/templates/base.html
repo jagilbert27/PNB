@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html>
 
+<style>
+  .wrap{
+    background-color:#eee; 
+    display:inline-block;
+  }
+</style>
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -16,7 +23,7 @@
 </head>
 
 <body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light container" style="padding:0;" aria-label="navbar">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light container shadow" style="padding:0;" aria-label="navbar">
     <div class="container-fluid" style="background-color: #ddd; padding:8px;">
       <a class="navbar-brand" href="#">Pick &amp; Bow</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse">
@@ -108,8 +115,6 @@
     {% endfor %}
     {% endif %}
     {% endwith %}
-
-    <br />
     {% block content %} {% endblock %}
   </div>
   <!-- jQuery first, then Popper.js, then Bootstrap JS -->
@@ -133,14 +138,14 @@
   </script>
 
   <script type="text/javascript">
-    $(function () {
-      $('.date').datepicker({
-        todayBtn: "linked",
-        clearBtn: true,
-        autoclose: true,
-        format: 'mm/dd/yyyy'
-      });
-    });
+    // $(function () {
+    //   $('.date').datepicker({
+    //     todayBtn: "linked",
+    //     clearBtn: true,
+    //     autoclose: true,
+    //     format: 'mm/dd/yyyy'
+    //   });
+    // });
   </script>
 
 {% block scripts %} {% endblock %}

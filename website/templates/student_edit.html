@@ -1,33 +1,39 @@
 {% extends "base.html" %} {% block title %}Student{% endblock %} {% block
 content %}
 
-<div class="d-flex justify-content-between bg-primary text-white rounded">
-  <div class="p-2">
-    <h3 >
-      <span style="font-weight:100">
-        {% if readonly==True %}
-          View
-        {% elif student.id %}
-          Edit
-        {% else %}
-          New
-        {% endif %}</span>
-      <span style="font-weight: 700">Student</span>
-    </h3>
-  </div>
+
+
+<div class="d-flex justify-content-between bg-primary text-white rounded p-2">
+  <h3>
+    <span style="font-weight:100">
+      {% if readonly==True %}
+      View
+      {% elif student.id %}
+      Edit
+      {% else %}
+      New
+      {% endif %}</span>
+    <span style="font-weight: 700">Student</span>
+  </h3>
   {% if student.id is not none and readonly != true%}
-  <div class="p-2 bg-primary">
-    <div class="bd-highlight">
-      <div class="rounded" data-bs-toggle="tooltip" data-bs-placement="left" style="background-color:#ddd;padding:1px" title="Delete Student">
-        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#confirm-delete" >
-          <span><i class="bi bi-x-circle"></i></span>
-        </button>
-      </div>
+  <div>
+    <div class="rounded wrap" >
+    <a href="{{ url_for('views.checkout_new',student_id=student.id)}}" type="button" class="btn btn-outline-success" >
+      <span aria-hidden="true"><i class="bi bi-check2-circle"></i>&nbsp;Checkout an Instrument</span>
+    </a>
+  </div>
+  <div class="rounded wrap" >
+    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#confirm-delete">
+      <span><i class="bi bi-trash"></i>&nbsp;Delete this Student</span>
+    </button>
     </div>
+
+
   </div>
   {% endif %}
 </div>
-<br/>
+
+  <br />
 <form class="row g-3" style='background-color: #eee;' method="POST">
   {% if readonly==true %}
  
@@ -61,54 +67,60 @@ content %}
     </div>
   </div>
 
-  {% if student.id %}
-  <!-- Checkouts -->
-  <div class="col-md-12 form-group required">
-    <h5> Checkout History</h5>
-    <table id=student-table class='table table-striped'>
-      <thead id="table-head" class='bg-secondary text-white '>
-        <tr style='vertical-align: middle; '>
-          <th >Checked Out</th>
-          <th >Tag</th>
-          <th class="d-none d-sm-table-cell">Type</th>
-          <th class="d-none d-md-table-cell"> Out Condition</th>
-          <th>Due</th>
-          <th>Returned</th>
-          <th class="d-none d-md-table-cell">In Condition</th>
-          <th class="d-none d-md-table-cell">Returned To</th>
-          <th class="d-none d-md-table-cell">Notes</th>
-          <th style="width:0%; padding:0;">
-            <div class="p-1" >
-              <div class="rounded" style="background-color:#eee;padding:1px">
-                <a href="{{ url_for('views.checkout_new')}}" type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="tooltip" title="Checkout An Instrument">
-                  <span aria-hidden="true"><i class="bi bi-plus-circle"></i></span>
-                </a>
-              </div>
-            </div>
-          </th>
-        </tr>
-      </thead>
-      <tbody id="table-body">
-        {% for checkout in student.checkouts %}
-        <tr>
-          <td style="white-space:nowrap">{{ checkout.checkout_date }}</td>
-          <td><b><a style="text-decoration-line:none"
-                href="{{ url_for('views.instrument_edit', id=checkout.instrument.id)}}">{{ checkout.instrument.tag
-                }}</a></b></td>
-          <td class="d-none d-sm-table-cell">{{ checkout.instrument.type.name }}</a></td>
-          <td class="d-none d-md-table-cell">{{ checkout.checkout_condition.name }}</td>
-          <td>{{ checkout.due_date }}</td>
-          <td>{{ checkout.return_date }}</td>
-          <td class="d-none d-md-table-cell">{{ checkout.return_condition.name }}</td>
-          <td class="d-none d-md-table-cell">{{ checkout.return_location }}</td>
-          <td class="d-none d-md-table-cell">{{ checkout.Notes }}</td>
-          <td><b><a style="text-decoration-line:none" href="{{ url_for('views.checkout_edit',id=checkout.id)}}">Return</a></b></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% endif %}
+{% if student.id %}
+<!-- Checkouts -->
+<div class="col-md-12 form-group required">
+  <h5 style="color:steelblue;"> Checkout History</h5>
+  <table id=student-table class='table table-striped'>
+    <thead id="table-head" class='text-white' style="background:steelblue;">
+      <tr style='vertical-align: middle; '>
+        <th>Checked Out</th>
+        <th>Tag</th>
+        <th class="d-none d-sm-table-cell">Type</th>
+        <th class="d-none d-md-table-cell"> Out Condition</th>
+        <th>Due</th>
+        <th>Returned</th>
+        <th class="d-none d-md-table-cell">In Condition</th>
+        <th class="d-none d-md-table-cell">Returned To</th>
+        <th></th>
+
+      </tr>
+    </thead>
+    <tbody id="table-body">
+      {% for checkout in student.checkouts %}
+      <tr>
+        <td style="white-space:nowrap">{{ checkout.checkout_date }}</td>
+        <td><b><a style="text-decoration-line:none"
+              href="{{ url_for('views.instrument_edit', id=checkout.instrument.id)}}">{{ checkout.instrument.tag
+              }}</a></b></td>
+        <td class="d-none d-sm-table-cell">{{ checkout.instrument.type.name }}</a></td>
+        <td class="d-none d-md-table-cell">{{ checkout.checkout_condition.name }}</td>
+        <td>{{ checkout.due_date }}</td>
+        <td>{{ checkout.return_date }}</td>
+        <td class="d-none d-md-table-cell">{{ checkout.return_condition.name }}</td>
+        <td class="d-none d-md-table-cell">{{ checkout.return_location }}</td>
+        <td style="text-align: end;">
+          {% if not checkout.return_date %}
+          <a href="{{ url_for('views.checkout_edit',id=checkout.id)}}" type="button"
+            class="btn btn-outline-success btn-sm bg-white">
+            <span aria-hidden="true"><i class="bi bi-check2-circle"></i>&nbsp;Return Instrument</span>
+          </a>
+          {% else %}
+          <div class="wrap">
+            <a href="{{ url_for('views.checkout_edit',id=checkout.id)}}" type="button"
+              class="btn btn-outline-success btn-sm">
+              <span aria-hidden="true"><i class="bi bi-check2-circle"></i></span>
+            </a>
+          </div>
+        </td>
+        {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
 
   {% if readonly==true %}
   <fieldset disabled="disabled">
@@ -120,9 +132,6 @@ content %}
   {% endif %}
  </form>
 
-
- <!-- Launch modal -->
-
 <!-- Confirm Delete Modal -->
 <div class="modal fade" id="confirm-delete" aria-hidden="true" aria-labelledby="modal-title">
   <div class="modal-dialog">
@@ -131,9 +140,7 @@ content %}
         <h5 class="modal-title modal-title" id=modal-title>Delete {{student.first_name}}</h5>
         <button type=button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <!-- <div class="modal-title">
-        yada
-      </div> -->
+      <div class="modal-title"></div>
       <div class="modal-body">
         Are you sure you want to delete {{student.first_name}}?
       </div>
@@ -145,8 +152,7 @@ content %}
   </div>
 </div>
 
-
-
+<!-- ToDo List -->
 <br/>
 <div class="accordion" id="accordionExample">
   <div class="accordion-item">
