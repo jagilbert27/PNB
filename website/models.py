@@ -1,5 +1,8 @@
 from os import name
+from flask_user.decorators import roles_accepted
 from sqlalchemy.sql.expression import column
+
+# from website.views import instrument_edit
 from . import db
 from flask_user import UserMixin
 from sqlalchemy.sql import func
@@ -38,12 +41,17 @@ class UserRoles(db.Model):
 class Student(db.Model):
     __tablename__ = 'students'
     id= db.Column( db.Integer, primary_key=True)
+    external_id = db.Column(db.Integer)
     checkouts = relationship("StudentInstrument",back_populates="student")
+    semesters = relationship("StudentSemester",back_populates="student")
+    guardians = relationship("StudentGuardian",back_populates="student")
     email =  db.Column( db.String(150))
     first_name =  db.Column( db.String(150))
     last_name =  db.Column( db.String(150))
     notes =  db.Column( db.String(150))
     birthday = db.Column( db.Date)
+    address = db.Column( db.String(150))
+    phone = db.Column( db.String(20))
 
 class Instrument(db.Model):
     __tablename__ = 'instruments'
@@ -82,6 +90,12 @@ class InstrumentStatus(db.Model):
     instruments   = relationship(Instrument, back_populates='status')
     name          = db.Column(db.String)
 
+class InstrumentCondition(db.Model):
+    __tablename__ = 'instrument_conditions'
+    id            = db.Column( db.Integer, primary_key=True)
+    instruments   = relationship(Instrument, back_populates='condition')
+    name          = db.Column(db.String)
+
 class StudentInstrument(db.Model):
     __tablename__           = 'students_instruments'
     __table_args__          = (UniqueConstraint('student_id', 'instrument_id', 'checkout_date', name='_unique_student_instrument_checkoutdate'),)    
@@ -100,52 +114,76 @@ class StudentInstrument(db.Model):
     return_location         = db.Column(db.String(100))
     notes                   = db.Column(db.String(1000))
 
-    @classmethod
-    def from_request(cls, request):
-        return cls
-
-    # def __init__(self, request):
-    #     try:
-    #         self.checkout_date = datetime.strptime(request.form['checkout_date'],'%Y-%m-%d')
-    #     except: pass
-    #     try:
-    #         self.due_date = datetime.strptime(request.form['due_date'],'%Y-%m-%d')
-    #     except: pass
-    #     try:
-    #         self.return_date = datetime.strptime(request.form['return_date'],'%Y-%m-%d')
-    #     except: pass
-    #     self.student_id = request.form.get('student_id')
-    #     self.instrument_id = request.form.get('instrument_id')
-    #     self.checkout_condition_id = request.form.get('checkout_condition')
-    #     self.return_condition_id = request.form.get('return_condition')
-    #     self.return_location = request.form.get('return_location')
-    #     self.notes = request.form.get('notes')
-
-
-class InstrumentCondition(db.Model):
-    __tablename__ = 'instrument_conditions'
-    id            = db.Column( db.Integer, primary_key=True)
-    instruments   = relationship(Instrument, back_populates='condition')
-    name          = db.Column(db.String)
-
 class Semester(db.Model):
-    __tablename__ = 'semesters'
-    id            = db.Column(db.Integer, primary_key=True)
-    name          = db.Column(db.String)
+    __tablename__    = 'semesters'
+    id               = db.Column(db.Integer, primary_key=True)
+    students         = relationship("StudentSemester",back_populates="semester") 
+    name             = db.Column(db.String)
+    start_date       = db.Column(db.Date)
+    end_date         = db.Column(db.Date)
     first_class_date = db.Column(db.Date)
     last_class_date  = db.Column(db.Date)
-    earliest_checkout_date = db.Column(db.Date)
-    latest_due_date = db.Column(db.Date)
+    first_checkout_date = db.Column(db.Date)
+    latest_due_date  = db.Column(db.Date)
 
 
-    # @classmethod
-    # def get_for_date(cls, **kw):
-    #     obj = cls(**kw)
-    #     db.session.add(obj)
-    #     db.session.commit()
+class StudentSemester(db.Model):
+    __tablename__      = 'student_semester'
+    id                 = db.Column( db.Integer, primary_key=True)
+    student_id         = db.Column(db.ForeignKey('students.id'))
+    semester_id        = db.Column(db.ForeignKey('semesters.id'))
+    campus_id          = db.Column(db.ForeignKey('campuses.id'))
+    student            = relationship("Student",back_populates="semesters")
+    semester           = relationship("Semester",back_populates="students")
+    campus             = relationship("Campus")
+    signup_date        = db.Column( db.Date)
+    grade              = db.Column( db.Integer)
+    shirt_size         = db.Column( db.String(150))
+    behavior_agreement = db.Column( db.Boolean)
+    photo_permission   = db.Column( db.Boolean)
+    hardship_requested = db.Column( db.Boolean)
+    tuition_changed    = db.Column( db.Numeric(8,2))
+    rental_charged     = db.Column( db.Numeric(8,2))
+    total_paid         = db.Column( db.Numeric(8,2))
+    paid_date          = db.Column( db.Date)
 
-    # def for_date(cls, date):
-    #     return Session.query(Users).filter(Users.id==userid).first()
+class Person(db.Model):
+    __tablename__ = 'persons'
+    id            = db.Column( db.Integer, primary_key=True)
+    students      = relationship("StudentGuardian",back_populates="guardian")
+    name          = db.Column( db.String(150))
+    # roles
 
+class PersonRole(db.Model):
+    __tablename__ = 'person_role'
+    id          = db.Column( db.Integer, primary_key=True)
+    name        = db.Column( db.String(150))  # Parent, Teacher, Administrator, Patron, Follower
 
+class PersonsRoles(db.Model):
+    __tablename__ = 'persons_roles'
+    id            = db.Column( db.Integer, primary_key=True)
+    # person_id     = db.Column(db.ForeignKey('persons.id'))
+    # role_id       = db.Column(db.ForeignKey('person_role.id'))
+
+class GuardianType(db.Model):
+    __tablename__   = 'guardian_types'
+    id              = db.Column( db.Integer, primary_key=True)
+    dependent_name  = db.Column( db.String(150)) #child, nephew, niece, grandchild
+    guardian_name   = db.Column( db.String(150)) #mother, father, uncle, aunt...
+
+class StudentGuardian(db.Model):
+    __tablename__    = 'students_guardians'
+    __table_args__    = (UniqueConstraint('student_id', 'guardian_id', name='_unique_student_guardian'),)    
+    id               = db.Column( db.Integer, primary_key=True)
+    student_id       = db.Column(db.ForeignKey('students.id'))
+    guardian_id      = db.Column(db.ForeignKey('persons.id'))
+    guardian_type_id = db.Column(db.ForeignKey('guardian_types.id'))
+    student          = relationship("Student",back_populates="guardians")
+    guardian         = relationship("Person", back_populates="students")
+    guardian_type    = relationship("GuardianType")
+
+class Campus(db.Model):
+    __tablename__   = 'campuses'
+    id              = db.Column( db.Integer, primary_key=True)
+    name            = db.Column( db.String(150))
 

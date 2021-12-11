@@ -7,8 +7,9 @@ from flask_user import current_user, login_required, roles_required, UserMixin
 from sqlalchemy.sql.elements import Null
 from sqlalchemy.sql.expression import desc, false, null, outerjoin, select, text, true
 from sqlalchemy.orm import load_only
-
-from .models import Note, Student, Instrument, StudentInstrument, InstrumentType, InstrumentSize, InstrumentCondition, InstrumentStatus, Role, UserRoles, Semester
+from .models import User, Role, Note, \
+    Student, Instrument, StudentInstrument, InstrumentType, InstrumentSize, InstrumentCondition, InstrumentStatus, \
+    Semester, StudentSemester, Campus, GuardianType, StudentGuardian, Person
 from . import db
 import json
 import sqlalchemy
@@ -41,8 +42,7 @@ class InstrumentTypes(enum.Enum):
 
 
 @views.route('/Fill', methods=['GET', 'POST'])
-@roles_required('dev')
-@login_required
+# @roles_required('dev')
 def fill():
     StudentInstrument.query.delete()
     Instrument.query.delete()
@@ -51,6 +51,13 @@ def fill():
     InstrumentSize.query.delete()
     InstrumentType.query.delete()
     InstrumentStatus.query.delete()
+    Semester.query.delete()
+    StudentSemester.query.delete()
+    Campus.query.delete()
+    GuardianType.query.delete()
+    StudentGuardian.query.delete()
+    Person.query.delete()
+
     db.session.commit()
     flash('DB Cleared')
 
@@ -88,21 +95,88 @@ def fill():
     db.session.add(StudentInstrument(student_id=1, instrument_id=2, checkout_date=datetime(2021,11,1)))
     db.session.add(StudentInstrument(student_id=2, instrument_id=1, checkout_date=datetime(2021,11,1)))
 
-    db.session.add(Semester(name='Winter 2021/2022', earliest_checkout_date = datetime(2021,10,1), latest_due_date = datetime(2022,2,1)))
-    db.session.add(Semester(name='Spring 2022',      earliest_checkout_date = datetime(2022,2,2), latest_due_date = datetime(2022,6,1)))
-    db.session.add(Semester(name='Summer 2022', earliest_checkout_date = datetime(2022,6,2), latest_due_date = datetime(2022,10,2)))
+    db.session.add(Semester(id=1, name='Winter 2021/2022', first_checkout_date = datetime(2021,10,1), latest_due_date = datetime(2022, 2,1)))
+    db.session.add(Semester(id=2, name='Spring 2022',      first_checkout_date = datetime(2022, 2,2), latest_due_date = datetime(2022, 6,1)))
+    db.session.add(Semester(id=3, name='Summer 2022',      first_checkout_date = datetime(2022, 6,2), latest_due_date = datetime(2022,10,2)))
 
-    # db.session.add(Role(id=1, name='dev'))
-    # db.session.add(UserRoles( user_id=1, role_id=1))
+    # Campus
+    db.session.add(Campus(id=1, name='LCMS'))
+    db.session.add(Campus(id=2, name='LCHS'))
+    db.session.add(Campus(id=3, name='Longbranch'))
 
+    # Student Semesters
+    db.session.add(StudentSemester(id=1, student_id=1, semester_id=1, grade=6, campus_id=1 ))
+    db.session.add(StudentSemester(id=2, student_id=1, semester_id=3, grade=7, campus_id=2 ))
+
+    # Guadian Types
+    db.session.add(GuardianType(id=1, dependent_name='child', guardian_name='parent'))
+    db.session.add(GuardianType(id=2, dependent_name='grandchild', guardian_name='grandparent'))
+    db.session.add(GuardianType(id=3, dependent_name='relative', guardian_name='relative'))
+
+    # Guardians (persons)
+    db.session.add(Person(id=1,name='Grandpa Adams'))
+    db.session.add(Person(id=2,name='Grandma Adams'))
+
+    # Student Guardians
+    db.session.add(StudentGuardian(id=1,student_id=1,guardian_id=1,guardian_type_id=2))
+    db.session.add(StudentGuardian(id=2,student_id=1,guardian_id=2,guardian_type_id=2))
+ 
     db.session.commit()
 
     flash('DB initialized with test data')
+
+    # Tests
+
+    # Student
+    student = Student.query.get(1)
+    assert student.first_name == 'Alpha'
+
+    # Semester
+    semester = Semester.query.get(1)
+    assert semester.name == 'Winter 2021/2022'
+
+    # Campus
+    campus = Campus.query.get(3)
+    assert campus.name == 'Longbranch'
+
+    # StudentSemester:student
+    assert student.semesters[0].semester.name == 'Winter 2021/2022'
+    assert semester.students[0].student.first_name == 'Alpha'
+
+    # StudentSemester:Campus
+    assert semester.students[0].campus_id == 1
+    assert student.semesters[0].campus.name == 'LCMS'
+
+    # Guardian Type
+    guardian_type = GuardianType.query.get(2)
+    assert guardian_type.dependent_name == 'grandchild'
+    assert guardian_type.guardian_name == 'grandparent'
+
+    # persons (Guardians)
+    guardian = Person.query.get(1)
+    guardian.name = 'Grandpa Adams'
+
+    # StudentGuardian
+    assert student.guardians[0].student_id == 1
+    assert student.guardians[0].student.first_name == 'Alpha'
+    assert student.guardians[0].guardian_id == 1
+    assert student.guardians[0].guardian.name == 'Grandpa Adams'
+    assert student.guardians[0].guardian_type_id == 2
+    assert student.guardians[0].guardian_type.dependent_name == 'grandchild'
+    assert student.guardians[0].guardian_type.guardian_name == 'grandparent'
+
+    # assert student.guardians[0].student.first_name == 'Alpha'
+
+    flash('DB model tests pass')
+
     return redirect(url_for('views.home'))
+
+# db.session.add(Role(id=1, name='dev'))
+# db.session.add(UserRoles( user_id=1, role_id=1))
 
 
 @views.route('/', methods=['GET', 'POST'])
-@login_required
+# @login_required
 def home():
     if request.method == 'POST':
         note = request.form.get('note')
@@ -376,7 +450,7 @@ def checkout_edit(id):
     checkout = StudentInstrument.query.get_or_404(id)
     available_instruments = Instrument.query.filter(or_(Instrument.status_id == 1, Instrument.id == checkout.instrument_id))
     semester = Semester.query.filter(
-        datetime.now() >= Semester.earliest_checkout_date,
+        datetime.now() >= Semester.first_checkout_date,
         datetime.now() <= Semester.latest_due_date 
         ).first()
 
@@ -429,7 +503,7 @@ def checkout_edit(id):
 def checkout_new(student_id=None,instrument_id=None):
     available_instruments = Instrument.query.filter_by(status_id = InstrumentStatuses.Available.value)
     semester = Semester.query.filter(
-        datetime.now() >= Semester.earliest_checkout_date,
+        datetime.now() >= Semester.first_checkout_date,
         datetime.now() <= Semester.latest_due_date 
         ).first()
     checkout = StudentInstrument(
