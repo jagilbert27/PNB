@@ -2,9 +2,9 @@
 <html>
 
 <style>
-  .wrap{
-    background-color:#eee; 
-    display:inline-block;
+  .wrap {
+    background-color: #eee;
+    display: inline-block;
   }
 </style>
 
@@ -30,9 +30,16 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navmenu">
-        {% if user.is_authenticated %}
-        <!-- Home -->
+        {% if not user.is_authenticated %}
         <ul class="navbar-nav me-auto mb-2 mb-md-0">
+          <li class="nav-item">
+          <a class="nav-item nav-link" id="login" href="/login">Log In</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-item nav-link" id="signUp" href="/sign-up">Sign Up</a>
+        </li>
+        {% else %}
+        <!-- Home -->
           <li class="nav-item  me-2">
             <a class="btn btn-outline-primary active" href="/" data-abc="true">Home</a>
           </li>
@@ -73,28 +80,15 @@
             </div>
           </li>
         </ul>
-        <!-- Right side of menu
-        <form class="d-flex">
-            <a class="btn btn-outline-primary me-2" href="/Fill">DB.Init</a>
-          <a class="btn btn-outline-primary me-2" id="logout" href="/logout">Log&nbsp;Out</a>
-          <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-          <button class="btn btn-outline-success" type="submit">Search</button>
-        </form> -->
-        {% else %}
-        <li class="nav-item">
-          <a class="nav-item nav-link" id="login" href="/login">Log In</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-item nav-link" id="signUp" href="/sign-up">Sign Up</a>
-        </li>
-        {% endif %}
         <!-- Right side of menu -->
         <form class="d-flex">
           <a class="btn btn-outline-primary me-2" href="/Fill">DB.Init</a>
-        <a class="btn btn-outline-primary me-2" id="logout" href="/logout">Log&nbsp;Out</a>
-        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-        <button class="btn btn-outline-success" type="submit">Search</button>
-      </form>
+          <a class="btn btn-outline-primary me-2" id="logout" href="/logout">Log&nbsp;Out</a>
+          <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+          <button class="btn btn-outline-success" type="submit">Search</button>
+        </form>
+        {% endif %}
+
       </div>
     </div>
   </nav>
@@ -155,7 +149,7 @@
     // });
   </script>
 
-{% block scripts %} {% endblock %}
+  {% block scripts %} {% endblock %}
 
 </body>
 

@@ -1,14 +1,9 @@
-from os import name
-from flask_user.decorators import roles_accepted
-from sqlalchemy.sql.expression import column
-
-# from website.views import instrument_edit
 from . import db
-from flask_user import UserMixin
+from flask_login import UserMixin
+from sqlalchemy.sql import func
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
-from datetime import datetime, timedelta 
 
 class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -18,25 +13,11 @@ class Note(db.Model):
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    active = db.Column('is_active', db.Boolean(), nullable=False, server_default='1')    
-    email_confirmed_at = db.Column(db.DateTime())
-    roles = db.relationship('Role', secondary='user_roles')
     email = db.Column(db.String(150), unique=True)
     password = db.Column(db.String(150))
     first_name = db.Column(db.String(150))
     notes = db.relationship('Note')
 
-class Role(db.Model):
-    __tablename__ = 'roles'
-    id = db.Column(db.Integer(), primary_key=True)
-    users = db.relationship('User', secondary='user_roles')
-    name = db.Column(db.String(50), unique=True)
-
-class UserRoles(db.Model):
-    __tablename__ = 'user_roles'
-    id = db.Column(db.Integer(), primary_key=True)
-    user_id = db.Column(db.Integer(), db.ForeignKey('user.id', ondelete='CASCADE'))
-    role_id = db.Column(db.Integer(), db.ForeignKey('roles.id', ondelete='CASCADE'))    
 
 class Student(db.Model):
     __tablename__ = 'students'
@@ -124,8 +105,7 @@ class Semester(db.Model):
     first_class_date = db.Column(db.Date)
     last_class_date  = db.Column(db.Date)
     first_checkout_date = db.Column(db.Date)
-    latest_due_date  = db.Column(db.Date)
-
+    last_due_date  = db.Column(db.Date)
 
 class StudentSemester(db.Model):
     __tablename__      = 'student_semester'
@@ -152,18 +132,21 @@ class Person(db.Model):
     id            = db.Column( db.Integer, primary_key=True)
     students      = relationship("StudentGuardian",back_populates="guardian")
     name          = db.Column( db.String(150))
-    # roles
+    roles         = relationship("PersonsRoles",back_populates="person")
 
 class PersonRole(db.Model):
     __tablename__ = 'person_role'
     id          = db.Column( db.Integer, primary_key=True)
     name        = db.Column( db.String(150))  # Parent, Teacher, Administrator, Patron, Follower
+    persons     = relationship("PersonsRoles",back_populates="role")
 
 class PersonsRoles(db.Model):
     __tablename__ = 'persons_roles'
     id            = db.Column( db.Integer, primary_key=True)
-    # person_id     = db.Column(db.ForeignKey('persons.id'))
-    # role_id       = db.Column(db.ForeignKey('person_role.id'))
+    person_id     = db.Column(db.ForeignKey('persons.id'))
+    role_id       = db.Column(db.ForeignKey('person_role.id'))
+    person        = relationship("Person",back_populates="roles")
+    role          = relationship("PersonRole",back_populates="persons")
 
 class GuardianType(db.Model):
     __tablename__   = 'guardian_types'

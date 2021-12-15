@@ -1,19 +1,13 @@
 import enum
-from operator import or_
-from re import X
 from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for
 from flask_login import login_required, current_user
-from flask_user import current_user, login_required, roles_required, UserMixin
-from sqlalchemy.sql.elements import Null
-from sqlalchemy.sql.expression import desc, false, null, outerjoin, select, text, true
-from sqlalchemy.orm import load_only
-from .models import User, Role, Note, \
-    Student, Instrument, StudentInstrument, InstrumentType, InstrumentSize, InstrumentCondition, InstrumentStatus, \
-    Semester, StudentSemester, Campus, GuardianType, StudentGuardian, Person
+from .models import Note, Student
 from . import db
 import json
-import sqlalchemy
-from datetime import date, datetime, timedelta 
+from datetime import date, datetime
+from .models import User, Note, \
+    Student, Instrument, StudentInstrument, InstrumentType, InstrumentSize, InstrumentCondition, InstrumentStatus, \
+    Semester, StudentSemester, Campus, GuardianType, StudentGuardian, Person, PersonRole, PersonsRoles
 
 views = Blueprint('views', __name__)
 
@@ -42,7 +36,6 @@ class InstrumentTypes(enum.Enum):
 
 
 @views.route('/Fill', methods=['GET', 'POST'])
-# @roles_required('dev')
 def fill():
     StudentInstrument.query.delete()
     Instrument.query.delete()
@@ -57,7 +50,8 @@ def fill():
     GuardianType.query.delete()
     StudentGuardian.query.delete()
     Person.query.delete()
-
+    PersonRole.query.delete()
+    PersonsRoles.query.delete()
     db.session.commit()
     flash('DB Cleared')
 
@@ -95,9 +89,9 @@ def fill():
     db.session.add(StudentInstrument(student_id=1, instrument_id=2, checkout_date=datetime(2021,11,1)))
     db.session.add(StudentInstrument(student_id=2, instrument_id=1, checkout_date=datetime(2021,11,1)))
 
-    db.session.add(Semester(id=1, name='Winter 2021/2022', first_checkout_date = datetime(2021,10,1), latest_due_date = datetime(2022, 2,1)))
-    db.session.add(Semester(id=2, name='Spring 2022',      first_checkout_date = datetime(2022, 2,2), latest_due_date = datetime(2022, 6,1)))
-    db.session.add(Semester(id=3, name='Summer 2022',      first_checkout_date = datetime(2022, 6,2), latest_due_date = datetime(2022,10,2)))
+    db.session.add(Semester(id=1, name='Winter 2021/2022', first_checkout_date = datetime(2021,10,1), last_due_date = datetime(2022, 2,1)))
+    db.session.add(Semester(id=2, name='Spring 2022',      first_checkout_date = datetime(2022, 2,2), last_due_date = datetime(2022, 6,1)))
+    db.session.add(Semester(id=3, name='Summer 2022',      first_checkout_date = datetime(2022, 6,2), last_due_date = datetime(2022,10,2)))
 
     # Campus
     db.session.add(Campus(id=1, name='LCMS'))
@@ -117,10 +111,21 @@ def fill():
     db.session.add(Person(id=1,name='Grandpa Adams'))
     db.session.add(Person(id=2,name='Grandma Adams'))
 
+    # Person Roles
+    db.session.add(PersonRole(id=1,name='Guardian'))
+    db.session.add(PersonRole(id=2,name='Teacher'))
+    db.session.add(PersonRole(id=3,name='Staff'))
+
+    # Grandpa Adams is a guardian
+    db.session.add(PersonsRoles(id=1,person_id=1,role_id=1))
+
+
     # Student Guardians
     db.session.add(StudentGuardian(id=1,student_id=1,guardian_id=1,guardian_type_id=2))
     db.session.add(StudentGuardian(id=2,student_id=1,guardian_id=2,guardian_type_id=2))
  
+    # Person Roles
+
     db.session.commit()
 
     flash('DB initialized with test data')
@@ -165,6 +170,15 @@ def fill():
     assert student.guardians[0].guardian_type.dependent_name == 'grandchild'
     assert student.guardians[0].guardian_type.guardian_name == 'grandparent'
 
+    # Person Roles
+    assert guardian.roles[0].role_id == 1
+    assert guardian.roles[0].role.name == 'Guardian'
+
+    #Role
+    person_role = PersonRole.query.get(1)
+    assert person_role.persons[0].id == 1
+    assert person_role.persons[0].person.name == 'Grandpa Adams'
+
     # assert student.guardians[0].student.first_name == 'Alpha'
 
     flash('DB model tests pass')
@@ -176,7 +190,7 @@ def fill():
 
 
 @views.route('/', methods=['GET', 'POST'])
-# @login_required
+@login_required
 def home():
     if request.method == 'POST':
         note = request.form.get('note')
@@ -504,14 +518,15 @@ def checkout_new(student_id=None,instrument_id=None):
     available_instruments = Instrument.query.filter_by(status_id = InstrumentStatuses.Available.value)
     semester = Semester.query.filter(
         datetime.now() >= Semester.first_checkout_date,
-        datetime.now() <= Semester.latest_due_date 
+        datetime.now() <= Semester.last_due_date 
         ).first()
     checkout = StudentInstrument(
-        checkout_date = datetime.strftime(datetime.now(),'%Y-%d-%m'),
-        due_date = datetime.strftime(semester.latest_due_date,'%Y-%d-%m'),
         student_id = student_id,
         instrument_id = instrument_id
     )
+    if semester:
+        checkout.checkout_date = datetime.strftime(datetime.now(),'%Y-%d-%m'),
+        checkout.due_date = datetime.strftime(semester.last_due_date,'%Y-%d-%m'),
 
     if request.method == 'GET':
         return render_template(

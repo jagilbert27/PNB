@@ -1,19 +1,8 @@
 {% extends "base.html" %} {% block title %}Checkouts{% endblock %} {% block content %}
-<!-- Header -->
-<div class="d-flex bg-primary text-white rounded">
-  <div class="p-1 flex-grow-1 bd-highlight">
-    <h3><span style="font-weight:100">List</span>&nbsp;<span style="font-weight: 700"></span>Checkouts</span></h3>
-  </div>
-  <div class="p-1">
-    <div class="rounded" style="background-color:#ddd;padding:1px">
-      <a href="{{ url_for('views.checkout_new')}}" type="button" class="btn btn-outline-success" data-bs-toggle="tooltip"
-        data-bs-placement="left" title="Checkout an Instrument">
-        <span aria-hidden="true"><i class="bi bi-plus-circle"></i>&nbsp;Checkout an Instrument</span>
-      </a>
-    </div>
-  </div>
-</div>
 
+<div class="container-fluid mt-4 mb-4 p-2 bg-primary text-white rounded">
+  <h3><span style="font-weight:100">List</span>&nbsp;<span style="font-weight: 700"></span>Checkouts</span></h3>
+</div>
 
 <table id=checkout-table class='table table-striped'>
   <thead id="table-head">
@@ -37,106 +26,19 @@
           <td><a href="{{ url_for('views.instrument_edit', id=checkout.instrument.id)}}">{{ checkout.instrument.tag}}: {{ checkout.instrument.type.name }}</a></td>
           <td>{{ checkout.checkout_date }}</td>
           <td>{{ checkout.checkout_condition.name }}</td>
-
-          
-          {% if checkout.due_date and not checkout.return_date and checkout.due_date < today %}
-            <td class='table-danger' data-bs-toggle="tooltip" data-bs-placement="top" title="Overdue">{{ checkout.due_date }}</td>
-          {% else %}
-            <td>{{ checkout.due_date }}</td>
-          {% endif %}
-
-
+          <td>{{ checkout.due_date }}</td>
           <td>{{ checkout.return_date }}</td>
           <td>{{ checkout.return_condition.name }}</td>
           <td>{{ checkout.return_location }}</td>
-          <td style="text-align:right">
-            <a href="{{ url_for('views.checkout_edit',id=checkout.id)}}" type="button" class="btn btn-outline-success btn-sm"
-              data-bs-toggle="tooltip" data-bs-placement="top" title="View">
-              <span aria-hidden="true"><i class="bi bi-eye"></i></span>
-            </a>
-            <a href="{{ url_for('views.checkout_edit',id=checkout.id)}}" type="button" class="btn btn-outline-warning btn-sm"
-              data-bs-toggle="tooltip" data-bs-placement="top" title="Edit">
-              <span aria-hidden="true"><i class="bi bi-pencil"></i></span>
-            </a>
-            <span class="rounded" class="btn-sm" style="background-color:#ddd;padding:1px" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
-              <button type="button" value='{ "id":{{ checkout.id }},"message":"{{ checkout.student.first_name }}s checkout of {{ checkout.instrument.type.name }} {{ checkout.instrument.tag }}" }' 
-                name=delete_checkout class="btn btn-outline-danger btn-sm" title="Delete">
-                <span><i class="bi bi-x-circle"></i></span>
-              </button>
-            </span>
+
+          <td>
+            <a class="mr-2" href="{{ url_for('views.checkout_edit',id=checkout.id)}}">Return</a>
           </td>
+
+
         </tr>
       {% endfor %}
     {% endfor %}
   </tbody>
 </table>
-
-
-
-<!-- Confirm Delete Modal -->
-<div class="modal fade" id="confirm-delete" aria-hidden="true" aria-labelledby="modal-title">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id=modal-title>Delete <span id='modal-title-message'></span>?</h5>
-        <button type=button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        Are you sure you want to delete <span id='modal-body-message'></span>?<br/>
-        This should only be deleted if the checkout was a mistake.<br/><br/>
-        To return an instrument, edit the checkout and enter a Return Date.
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close">Cancel</button>
-        <form method="post" id="item-delete-form">
-          <button id='modal-delete-button' type="submit" class="btn btn-danger" value=42>Delete</button>
-          <input id=id-to-delete name=id-to-delete type=hidden value="?">
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-
-
-<br />
-<div class="accordion" id="accordionExample">
-  <div class="accordion-item">
-    <h2 class="accordion-header" id="headingOne">
-      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-        To Do List
-      </button>
-    </h2>
-    <div id="collapseOne" class="accordion-collapse collapse " aria-labelledby="headingOne" data-bs-parent="#accordionExample">
-      <div class="accordion-body">
-        <ul>
-          <li>Auth protect page</li>
-          <li>List</li>
-            <ul>
-              <li><del>replace "Return" with view, edit, delete</del></li>
-              <li>overdue notice</li>
-              <li>Sort</li>
-              <li>Filter</li>
-            </ul>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
-
-{% endblock %}
-
-{% block scripts %}
-<script>
-  $('button[name="delete_checkout"]').on('click', function (e) {
-    var checkout = JSON.parse(this.value);
-    var myModal = new bootstrap.Modal(document.getElementById('confirm-delete'));
-    document.getElementById('modal-title-message').innerHTML = checkout.message;
-    document.getElementById('modal-body-message').innerHTML = checkout.message;
-    document.getElementById('id-to-delete').value = checkout.id
-    myModal.show();
-  });
-</script>
 {% endblock %}
