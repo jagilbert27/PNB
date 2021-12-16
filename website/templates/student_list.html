@@ -19,6 +19,7 @@
 <table id=checkout-table class='table table-striped'>
   <thead id="table-head">
     <tr>
+      <th>exid</th>
       <th>First Name</th>
       <th>Last Name</th>
       <th>Email</th>
@@ -29,7 +30,8 @@
   <tbody id="table-body">
     {% for student in students %}
     <tr>
-      <td><a href="{{ url_for('views.student_edit',id=student.id)}}">{{ student.first_name }}</a></td>
+      <td><a href="{{ url_for('views.student_edit',id=student.id)}}">{{ student.external_id }}</a></td>
+      <td>{{ student.first_name }}</td>
       <td>{{ student.last_name }}</td>
       <td>{{ student.email}}</td>
       <td>

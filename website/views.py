@@ -1,6 +1,8 @@
 import enum
+import sys
 from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for
 from flask_login import login_required, current_user
+import pandas
 from .models import Note, Student
 from . import db
 import json
@@ -81,9 +83,9 @@ def fill():
     db.session.add(Instrument(type_id=InstrumentTypes.Fiddle.value, tag='F1', condition_id=InstrumentConditions.New.value, status_id=InstrumentStatuses.Available.value ))
     db.session.add(Instrument(type_id=InstrumentTypes.Guitar.value, tag='G1', condition_id=InstrumentConditions.New.value, status_id=InstrumentStatuses.Available.value  ))
 
-    db.session.add(Student(email='a@a.com',first_name='Alpha',last_name='A'))
-    db.session.add(Student(email='b@b.com',first_name='Bravo',last_name='B'))
-    db.session.add(Student(email='c@c.com',first_name='Charlie',last_name='C'))
+    db.session.add(Student(external_id=-1, email='a@a.com',first_name='Alpha',last_name='A'))
+    db.session.add(Student(external_id=-2, email='b@b.com',first_name='Bravo',last_name='B'))
+    db.session.add(Student(external_id=-3, email='c@c.com',first_name='Charlie',last_name='C'))
 
     db.session.add(StudentInstrument(student_id=1, instrument_id=1, checkout_date=datetime(2021,11,1)))
     db.session.add(StudentInstrument(student_id=1, instrument_id=2, checkout_date=datetime(2021,11,1)))
@@ -224,7 +226,7 @@ def delete_note():
 @login_required
 def student_list():
     if request.method == 'GET':
-        students = Student.query.all()
+        students = Student.query.order_by(Student.external_id).all()
         return render_template("student_list.html", students=students, user=current_user)
     
     student_id=request.form['student-id-to-delete']
@@ -267,6 +269,7 @@ def student_edit(id):
         return render_template("student_edit.html", student=student, user=current_user)
     
     student_gather(student, request)
+    db.session.commit()
     flash(f'Updated Student {student.first_name} {student.last_name}', category='success')
     return redirect(url_for('views.student_list'))
 
@@ -582,3 +585,35 @@ def checkout_delete():
             db.session.rollback()
             flash(f'Delete Failed {type(ex)}', category='error')
     return jsonify({})
+
+
+@views.route('/student/import', methods=['GET','POST'])
+@login_required
+def student_import():
+    print('Hello world!', file=sys.stderr)
+    num_updated = 0
+    num_added = 0
+    num_total = 0
+    imported = pandas.read_csv('student_import.csv').transpose()
+    for _, content in imported.items():
+        num_total += 1
+        student=Student.query.filter(Student.external_id == content['Record number']).first()
+        if student:
+            print(f'student {student}', file=sys.stderr)
+            num_updated += 1
+        else:
+            num_added += 1
+            student = Student()
+            student.external_id = content['Record number']
+
+        student.email = content['Email']
+        student.first_name = content['First Name']
+        student.last_name = content['Last Name']
+        student.address = content['Address']
+        student.phone = content['Phone']
+        db.session.add(student)
+
+    db.session.commit()
+
+    flash(f'Import Complete. Total: {num_total}, Updated: {num_updated}, Added: {num_added}', category='success')
+    return redirect(url_for('views.student_list'))
