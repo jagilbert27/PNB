@@ -110,6 +110,7 @@ class Semester(db.Model):
 class StudentSemester(db.Model):
     __tablename__      = 'student_semester'
     id                 = db.Column( db.Integer, primary_key=True)
+    external_id        = db.Column( db.Integer)
     student_id         = db.Column(db.ForeignKey('students.id'))
     semester_id        = db.Column(db.ForeignKey('semesters.id'))
     campus_id          = db.Column(db.ForeignKey('campuses.id'))
@@ -122,10 +123,15 @@ class StudentSemester(db.Model):
     behavior_agreement = db.Column( db.Boolean)
     photo_permission   = db.Column( db.Boolean)
     hardship_requested = db.Column( db.Boolean)
-    tuition_changed    = db.Column( db.Numeric(8,2))
+    tuition_charged    = db.Column( db.Numeric(8,2))
     rental_charged     = db.Column( db.Numeric(8,2))
     total_paid         = db.Column( db.Numeric(8,2))
     paid_date          = db.Column( db.Date)
+
+    first_choice_instrument_type_id = db.Column(db.ForeignKey('instrument_types.id'))
+    second_choice_instrument_type_id = db.Column(db.ForeignKey('instrument_types.id'))
+
+
 
 class Person(db.Model):
     __tablename__ = 'persons'

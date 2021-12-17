@@ -91,14 +91,14 @@ def fill():
     db.session.add(StudentInstrument(student_id=1, instrument_id=2, checkout_date=datetime(2021,11,1)))
     db.session.add(StudentInstrument(student_id=2, instrument_id=1, checkout_date=datetime(2021,11,1)))
 
-    db.session.add(Semester(id=1, name='Winter 2021/2022', first_checkout_date = datetime(2021,10,1), last_due_date = datetime(2022, 2,1)))
-    db.session.add(Semester(id=2, name='Spring 2022',      first_checkout_date = datetime(2022, 2,2), last_due_date = datetime(2022, 6,1)))
-    db.session.add(Semester(id=3, name='Summer 2022',      first_checkout_date = datetime(2022, 6,2), last_due_date = datetime(2022,10,2)))
+    db.session.add(Semester(id=1, name='Winter 2021', first_checkout_date = datetime(2021,10,1), last_due_date = datetime(2022, 2,1)))
+    db.session.add(Semester(id=2, name='Spring 2022', first_checkout_date = datetime(2022, 2,2), last_due_date = datetime(2022, 6,1)))
+    db.session.add(Semester(id=3, name='Summer 2022', first_checkout_date = datetime(2022, 6,2), last_due_date = datetime(2022,10,2)))
 
     # Campus
     db.session.add(Campus(id=1, name='LCMS'))
-    db.session.add(Campus(id=2, name='LCHS'))
-    db.session.add(Campus(id=3, name='Longbranch'))
+    db.session.add(Campus(id=2, name='Blackburn'))
+    db.session.add(Campus(id=3, name='Long Branch'))
 
     # Student Semesters
     db.session.add(StudentSemester(id=1, student_id=1, semester_id=1, grade=6, campus_id=1 ))
@@ -140,14 +140,14 @@ def fill():
 
     # Semester
     semester = Semester.query.get(1)
-    assert semester.name == 'Winter 2021/2022'
+    assert semester.name == 'Winter 2021'
 
     # Campus
     campus = Campus.query.get(3)
-    assert campus.name == 'Longbranch'
+    assert campus.name == 'Long Branch'
 
     # StudentSemester:student
-    assert student.semesters[0].semester.name == 'Winter 2021/2022'
+    assert student.semesters[0].semester.name == 'Winter 2021'
     assert semester.students[0].student.first_name == 'Alpha'
 
     # StudentSemester:Campus
@@ -587,33 +587,74 @@ def checkout_delete():
     return jsonify({})
 
 
-@views.route('/student/import', methods=['GET','POST'])
+@views.route('/students/import', methods=['GET','POST'])
 @login_required
 def student_import():
-    print('Hello world!', file=sys.stderr)
+
+    truthy = ['agree','yes','true','1']
+    falsey = ['disagree','no','false','0']
     num_updated = 0
     num_added = 0
     num_total = 0
-    imported = pandas.read_csv('student_import.csv').transpose()
-    for _, content in imported.items():
+    import_table = pandas.read_csv('student_import.csv').transpose()
+    for _, imported in import_table.items():
         num_total += 1
-        student=Student.query.filter(Student.external_id == content['Record number']).first()
+        student=Student.query.filter(Student.external_id == imported['Record number']).first()
         if student:
             print(f'student {student}', file=sys.stderr)
             num_updated += 1
         else:
             num_added += 1
             student = Student()
-            student.external_id = content['Record number']
+            student.external_id = imported['Record number']
 
-        student.email = content['Email']
-        student.first_name = content['First Name']
-        student.last_name = content['Last Name']
-        student.address = content['Address']
-        student.phone = content['Phone']
+        # Student Data
+        student.email = imported['Email']
+        student.first_name = imported['First Name']
+        student.last_name = imported['Last Name']
+        student.address = imported['Address']
+        student.phone = imported['Phone']
         db.session.add(student)
+
+        # Hardcode the semester for now
+        semester = Semester.query.filter(Semester.name == 'Winter 2021').first()
+
+        # do we have that semester record for this student yet?
+        student_semester = StudentSemester.query.filter(
+            (StudentSemester.semester_id == semester.id) &            
+            (StudentSemester.student_id == student.id)).first()
+        if student_semester:
+            pass
+        else:
+            student_semester = StudentSemester()
+            student_semester.external_id = imported['Record number']
+        
+        campus = Campus.query.filter(Campus.name == imported['Location']).first()
+        if campus:
+            student_semester.campus_id = campus.id
+        student_semester.grade = imported['Grade']
+
+        instrument_1 = InstrumentType.query.filter(InstrumentType.name == imported['Instrument']).first()
+        if instrument_1:
+            student_semester.first_choice_instrument_type_id = instrument_1.id
+        instrument_2 = InstrumentType.query.filter(InstrumentType.name == imported['Second instrument']).first()
+        if instrument_2:
+            student_semester.second_choice_instrument_type_id = instrument_2.id
+        
+        student_semester.shirt_size = imported['Shirt Size']
+        student_semester.behavior_agreement = imported['Behavior Agreement'].lower() in truthy
+        student_semester.photo_permission = imported['Photo Permission'].lower() in truthy
+        student_semester.hardship_requested = str(imported['Hardship request']).lower() in truthy
+        student_semester.tuition_charged = imported['Tuition']
+        db.session.add(student_semester)
 
     db.session.commit()
 
     flash(f'Import Complete. Total: {num_total}, Updated: {num_updated}, Added: {num_added}', category='success')
     return redirect(url_for('views.student_list'))
+
+
+# @views.route('/instruments/import', methods=['GET','POST'])
+# @login_required
+# def student_import():
+
