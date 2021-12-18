@@ -33,7 +33,7 @@
       <select class="form-select" name=instrument_id id=instrument_id >
         <option>Select Instrument</option>
         {% for instrument in instruments %}
-        <option {% if instrument.id == checkout.instrument_id %} selected {% endif %} value="{{instrument.id}}">{{ instrument.tag }}: {{instrument.type.name }}</option>
+        <option {% if instrument.id == checkout.instrument_id %} selected {% endif %} value="{{instrument.id}}">{{ instrument.type.name }} {{ instrument.tag }}</option>
         {% endfor %}
       </select>
       <label for="instrument_id">Instrument</label>
@@ -65,14 +65,6 @@
     <div class="form-floating mb-3">
       <input type='date' class="form-control" name=due_date id=due_date value="{{ checkout.due_date }}">
       <label for=due_date >Due Date</label>
-    </div>
-  </div>
-
-  <!-- Return Date -->
-  <div class="col-md-4 required">
-    <div class="form-floating mb-3">
-      <input type='date' class="form-control" name=return_date id=return_date>
-      <label for=return_date >Return Date</label>
     </div>
   </div>
 

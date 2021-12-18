@@ -3,6 +3,7 @@ import sys
 from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for
 from flask_login import login_required, current_user
 import pandas
+from sqlalchemy.sql.expression import null
 from .models import Note, Student
 from . import db
 import json
@@ -13,6 +14,9 @@ from .models import User, Note, \
 
 views = Blueprint('views', __name__)
 
+truthy = ['agree','yes','true','1']
+falsey = ['disagree','no','false','0']
+
 
 class InstrumentConditions(enum.Enum):
     New=5
@@ -20,6 +24,7 @@ class InstrumentConditions(enum.Enum):
     Fair=3
     Poor=2
     Broken=1
+    Unknown=0
 
 class InstrumentStatuses(enum.Enum):
     Available=1
@@ -36,6 +41,11 @@ class InstrumentTypes(enum.Enum):
     Bass=5
     Ukulele=6
 
+class InstrumentSizes(enum.Enum):
+    _14  = 1
+    _12  = 2
+    _34  = 3
+    Full = 4
 
 @views.route('/Fill', methods=['GET', 'POST'])
 def fill():
@@ -465,10 +475,10 @@ def checkout_list():
 @login_required
 def checkout_edit(id):
     checkout = StudentInstrument.query.get_or_404(id)
-    available_instruments = Instrument.query.filter(or_(Instrument.status_id == 1, Instrument.id == checkout.instrument_id))
+    available_instruments = Instrument.query.filter((Instrument.status_id == 1) | (Instrument.id == checkout.instrument_id))
     semester = Semester.query.filter(
         datetime.now() >= Semester.first_checkout_date,
-        datetime.now() <= Semester.latest_due_date 
+        datetime.now() <= Semester.last_due_date 
         ).first()
 
     if request.method == 'GET':
@@ -479,7 +489,7 @@ def checkout_edit(id):
             instruments = available_instruments,
             students = Student.query.all(),
             instrument_conditions = InstrumentCondition.query.all(),
-            readonly = false,
+            readonly = False,
             user = current_user)
 
     if request.method == 'POST':
@@ -590,21 +600,36 @@ def checkout_delete():
 @views.route('/students/import', methods=['GET','POST'])
 @login_required
 def student_import():
+    stats = {
+        'students': {
+            'total': 0,
+            'added': 0,
+            'updated': 0
+        },
+        'student_semesters': {
+            'total': 0,
+            'added': 0,
+            'updated': 0
+        },
+        'checkouts': {
+            'total': 0,
+            'added': 0,
+            'updated': 0
+        },
+    }
 
-    truthy = ['agree','yes','true','1']
-    falsey = ['disagree','no','false','0']
-    num_updated = 0
-    num_added = 0
-    num_total = 0
-    import_table = pandas.read_csv('student_import.csv').transpose()
+    # try:
+
+    # import_table = pandas.read_csv('student_import.csv').transpose()
+    parse_dates = ['Checkout Date', 'Due Date','Return Date']
+    import_table = pandas.read_csv('student_import.csv',parse_dates=parse_dates).transpose()
     for _, imported in import_table.items():
-        num_total += 1
+        stats['students']['total'] += 1
         student=Student.query.filter(Student.external_id == imported['Record number']).first()
         if student:
-            print(f'student {student}', file=sys.stderr)
-            num_updated += 1
+            stats['students']['updated'] += 1
         else:
-            num_added += 1
+            stats['students']['added'] += 1
             student = Student()
             student.external_id = imported['Record number']
 
@@ -620,12 +645,14 @@ def student_import():
         semester = Semester.query.filter(Semester.name == 'Winter 2021').first()
 
         # do we have that semester record for this student yet?
+        stats['student_semesters']['total'] += 1
         student_semester = StudentSemester.query.filter(
             (StudentSemester.semester_id == semester.id) &            
             (StudentSemester.student_id == student.id)).first()
         if student_semester:
-            pass
+            stats['student_semesters']['updated'] += 1
         else:
+            stats['student_semesters']['added'] += 1
             student_semester = StudentSemester()
             student_semester.external_id = imported['Record number']
         
@@ -648,13 +675,111 @@ def student_import():
         student_semester.tuition_charged = imported['Tuition']
         db.session.add(student_semester)
 
+        # if i have any checkout data
+        if imported['Checkout Date']:
+            instrument = Instrument.query.filter(Instrument.tag == imported['Instrument tag']).first()
+            if instrument:
+                checkout = StudentInstrument.query \
+                    .order_by(StudentInstrument.checkout_date.desc()) \
+                    .filter(
+                        (StudentInstrument.student_id == student.id) &
+                        (StudentInstrument.checkout_date) &
+                        (not StudentInstrument.return_date)) \
+                    .first()
+                
+                print(f'checkout: {checkout}', file=sys.stderr)
+
+                if checkout:
+                    stats['checkouts']['updated'] += 1
+                else:
+                    stats['checkouts']['added'] += 1
+                    checkout = checkout = StudentInstrument()
+
+                checkout.student_id = student.id
+                checkout.external_id = imported['Record number']
+                checkout.instrument_id = instrument.id
+
+                if str(imported['Checkout Date']) != 'NaT':
+                    checkout.checkout_date = imported['Checkout Date']
+
+                if str(imported['Due Date']) != 'NaT':
+                    checkout.due_date = imported['Due Date']
+
+                if str(imported['Return Date']) != 'NaT':
+                    checkout.return_date = imported['Return Date']
+
+                db.session.add(checkout)
+
     db.session.commit()
 
-    flash(f'Import Complete. Total: {num_total}, Updated: {num_updated}, Added: {num_added}', category='success')
+    flash(f'Import Complete. '+
+        f"Student Total: {stats['students']['total']}, Added: {stats['students']['added']}, Updated: {stats['students']['updated']}\n"+
+        f"Semester Total: {stats['student_semesters']['total']}, Added: {stats['student_semesters']['added']}, Updated: {stats['student_semesters']['updated']}\n"+
+        f"Checkouts Total: {stats['checkouts']['total']}, Added: {stats['checkouts']['added']}, Updated: {stats['checkouts']['updated']}\n", 
+        category='success')
+
+# except:
+#     flash(f'Import Failed. '+
+#         f'Student Total: {stats.students.total}, Added: {stats.students.added}, Updated: {stats.students.updated}<br/>'+
+#         f'Semester Total: {stats.students.total}, Added: {stats.students.added}, Updated: {stats.students.updated}<br/>'+
+#         f'Checkouts Total: {stats.students.total}, Added: {stats.students.added}, Updated: {stats.students.updated}<br/>', 
+#         category='error')
+
     return redirect(url_for('views.student_list'))
 
 
-# @views.route('/instruments/import', methods=['GET','POST'])
-# @login_required
-# def student_import():
+@views.route('/instruments/import', methods=['GET','POST'])
+@login_required
+def instrument_import():
+    num_updated = 0
+    num_added = 0
+    num_total = 0
+    import_table = pandas.read_csv('instrument_import.csv').transpose()
 
+    for _, imported in import_table.items():
+        num_total += 1
+        instrument=Instrument.query.filter(Student.external_id == imported['Record number']).first()
+        if instrument:
+            num_updated += 1
+        else:
+            num_added += 1
+            instrument = Instrument()
+            instrument.external_id = imported['Record number']
+
+        instrument.tag = str(imported['Inventory number']).upper()
+        
+        if 'BS'  in instrument.tag: instrument.type_id = InstrumentTypes.Bass.value
+        elif 'B' in instrument.tag: instrument.type_id = InstrumentTypes.Banjo.value
+        elif 'F' in instrument.tag: instrument.type_id = InstrumentTypes.Fiddle.value
+        elif 'G' in instrument.tag: instrument.type_id = InstrumentTypes.Guitar.value
+        elif 'M' in instrument.tag: instrument.type_id = InstrumentTypes.Guitar.value
+        elif 'U' in instrument.tag: instrument.type_id = InstrumentTypes.Ukulele.value
+
+        size = str(imported['Size']).upper()
+        if size == "":        instrument.size_id = InstrumentSizes.Full.value
+        elif size == "FULL":  instrument.size_id = InstrumentSizes.Full.value
+        elif "03/04" in size: instrument.size_id = InstrumentSizes._34.value
+        elif "3/4" in size:   instrument.size_id = InstrumentSizes._34.value
+        elif "3.4" in size:   instrument.size_id = InstrumentSizes._34.value
+        elif ".75" in size:   instrument.size_id = InstrumentSizes._34.value
+        elif "01/02" in size: instrument.size_id = InstrumentSizes._12.value
+        elif "1/2" in size:   instrument.size_id = InstrumentSizes._12.value
+        elif "1.2" in size:   instrument.size_id = InstrumentSizes._12.value
+        elif ".5" in size:    instrument.size_id = InstrumentSizes._12.value
+        elif "01/04" in size: instrument.size_id = InstrumentSizes._14.value
+        elif "1/4" in size:   instrument.size_id = InstrumentSizes._14.value
+        elif "1.4" in size:   instrument.size_id = InstrumentSizes._14.value
+        elif ".25" in size:   instrument.size_id = InstrumentSizes._14.value
+
+        instrument.status_id = InstrumentStatuses.Available.value
+        instrument.condition_id = InstrumentConditions.Good.value
+        instrument.notes = (str(imported['Condition']).replace('nan','') + ' ' + str(imported['History']).replace('nan','')).strip()
+        instrument.serial = str(imported['Serial number']).replace('nan','')
+        instrument.brand = str(imported['Kind']).replace('nan','')
+        instrument.location = str(imported['Location']).replace('nan','')
+        db.session.add(instrument)
+
+    db.session.commit()
+
+    flash(f'Instrument Import Complete. Total: {num_total}, Updated: {num_updated}, Added: {num_added}', category='success')
+    return redirect(url_for('views.instrument_list'))

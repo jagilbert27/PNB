@@ -37,6 +37,7 @@ class Student(db.Model):
 class Instrument(db.Model):
     __tablename__ = 'instruments'
     id            = db.Column(db.Integer, primary_key=True)
+    external_id   = db.Column(db.Integer)
     type_id       = db.Column(db.Integer, db.ForeignKey('instrument_types.id'))
     size_id       = db.Column(db.Integer, db.ForeignKey('instrument_sizes.id'))
     status_id     = db.Column(db.Integer, db.ForeignKey('instrument_statuses.id'))
@@ -52,6 +53,8 @@ class Instrument(db.Model):
     model         = db.Column(db.String(150))
     location      = db.Column(db.String(150))
     est_value     = db.Column(db.Integer)
+    notes         = db.Column(db.String(1000))
+
 
 class InstrumentType(db.Model):
     __tablename__ = 'instrument_types'
@@ -81,6 +84,7 @@ class StudentInstrument(db.Model):
     __tablename__           = 'students_instruments'
     __table_args__          = (UniqueConstraint('student_id', 'instrument_id', 'checkout_date', name='_unique_student_instrument_checkoutdate'),)    
     id                      = db.Column(db.Integer, primary_key=True)
+    external_id             = db.Column(db.Integer)
     student_id              = db.Column(db.ForeignKey('students.id'))
     instrument_id           = db.Column(db.ForeignKey('instruments.id'))
     checkout_condition_id   = db.Column(db.Integer, db.ForeignKey('instrument_conditions.id'))
