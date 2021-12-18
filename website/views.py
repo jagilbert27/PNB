@@ -655,6 +655,8 @@ def student_import():
             stats['student_semesters']['added'] += 1
             student_semester = StudentSemester()
             student_semester.external_id = imported['Record number']
+            student_semester.student_id = student.id
+            student_semester.semester_id = semester.id
         
         campus = Campus.query.filter(Campus.name == imported['Location']).first()
         if campus:

@@ -1,26 +1,20 @@
 {% extends "base.html" %} {% block title %}Student{% endblock %} {% block
 content %}
 
-<!-- <div class="d-flex bg-primary text-white rounded">
-  <div class="p-1 flex-grow-1 bd-highlight">
-    <h3>
-      <span style="font-weight:100">{% if student.id is none %} New {% else %} Edit {% endif %}</span>&nbsp;<span
-        style="font-weight: 700"></span>Student</span></h3>
-  </div>
-</div> -->
-
 <div class="d-flex bg-primary text-white rounded">
   <div class="p-1 flex-grow-1 bd-highlight">
     <h3>
       <span style="font-weight:100">
         {% if student.id is none %} New {% else %} Edit {% endif %}
       </span>
-      <span style="font-weight: 700">Student</span></h3>
+      <span style="font-weight: 700">Student</span>
+    </h3>
   </div>
   {% if student.id is not none %}
   <div class="p-1">
     <div class="rounded" style="background-color:#ddd;padding:1px">
-      <button type="button" onClick="deleteStudent({{ student.id }})" class="btn btn-outline-danger"  data-bs-toggle="tooltip" data-bs-placement="left" title="Delete this student">
+      <button type="button" onClick="deleteStudent({{ student.id }})" class="btn btn-outline-danger"
+        data-bs-toggle="tooltip" data-bs-placement="left" title="Delete this student">
         <span><i class="bi bi-x-circle"></i></span>
       </button>
       </a>
@@ -28,55 +22,100 @@ content %}
   </div>
   {% endif %}
 </div>
-
-
-
+<br />
 <form class="row g-3" disabled="disabled" method="POST">
 
-
-
-
   <!-- First Name -->
-  <div class="col-md-6 form-group required">
-    <label for="first_name_group" class="col-form-label">First Name</label>
-    <div class="input-group" id=first_name_group>
-      <span class="input-group-text">
-        <i class="bi bi-person-fill"></i>
-      </span>
-      <input required type="text" class="form-control" id="first_name" name="first_name"
-        value="{% if student.first_name %}{{student.first_name}}{% endif %}" />
+  <div class="col-md-4 required">
+    <div class="form-floating mb-3">
+      <input type='text' class="form-control" name=first_name id=first_name required
+        value="{% if student.first_name %}{{student.first_name}}{% endif %}">
+      <label for=first_name>First Name</label>
     </div>
   </div>
 
   <!-- Last Name -->
-  <div class="col-md-6 form-group required">
-    <label for="last_name_group" class="col-form-label">Last Name</label>
-    <div class="input-group" id=first_name_group>
-      <span class="input-group-text">
-        <i class="bi bi-person-fill"></i>
-      </span>
-      <input required type="text" class="form-control" id="last_name" name="last_name"
-        value="{% if student.last_name %}{{student.last_name}}{% endif %}" />
+  <div class="col-md-4 required">
+    <div class="form-floating mb-3">
+      <input type='text' class="form-control" name=last_name id=last_name required
+        value="{% if student.last_name %}{{student.last_name}}{% endif %}">
+      <label for=last_name>Last Name</label>
     </div>
   </div>
 
-  <!-- Email -->
-
-
-  <!-- Email -->
-  <div class="col-md-12 form-group required">
-    <label for="email_group" class="col-form-label">Email</label>
-    <div class="input-group" id=email_group>
-      <span class="input-group-text">
-        @
-      </span>
-      <input required type="text" class="form-control" id="email" name="email"
-        value="{% if student.last_name %}{{student.email}}{% endif %}" />
+  <!-- Birthday -->
+  <div class="col-md-4 required">
+    <div class="form-floating mb-3">
+      <input type='date' class="form-control" name=checkout_date id=checkout_date required
+        value="{{ student.birthday }}">
+      <label for=checkout_date>Birthday</label>
     </div>
   </div>
 
+    <!-- Email -->
+    <div class="col-md-4 required">
+      <div class="form-floating mb-3">
+        <input type='text' class="form-control" name=email id=email required
+          value="{% if student.email %}{{student.email}}{% endif %}">
+        <label for=email>Email</label>
+      </div>
+    </div>
+
+
+    <!-- Phone -->
+    <div class="col-md-4 required">
+      <div class="form-floating mb-3">
+        <input type='text' class="form-control" name=phone id=phone required
+          value="{% if student.phone %}{{student.phone}}{% endif %}">
+        <label for=email>Phone</label>
+      </div>
+    </div>
+
+        <!-- Address -->
+        <div class="col-md-4 required">
+          <div class="form-floating mb-3">
+            <textarea class="form-control" name=address id=address required style="height:100%;"
+              rows=3> {% if student.address %}{{student.address | replace(",","\n")}}{% endif %}</textarea>
+            <label for=email>Address</label>
+          </div>
+        </div>
+    
   {% if student.id %}
 
+  <!-- Semesters -->
+  <div class="col-md-12 form-group required">
+    <table id=semester-table class='table'>
+      <thead id="table-head">
+        <tr>
+          <th colspan=4>Instrument Checkouts</th>
+          <th colspan=2 style="text-align:right;">New</th>
+        </tr>
+        <tr>
+
+          <th>Signup</th>
+          <th>Semester</th>
+          <th>Campus</th>
+          <th>Shirt</th>
+          <th>Behave</th>
+          <th>Photo</th>
+          <th>Hardship</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        {% for stusem in student.semesters %}
+        <tr>
+          <td>{{ stusem.signup_date }}</td>
+          <td>{{ stusem.semester.name }}</td>
+          <td>{{ stusem.campus.name }}</td>
+          <td>{{ stusem.shirt_size }}</td>
+          <td>{{ stusem.behavior_agreement }}</td>
+          <td>{{ stusem.photo_permission }}</td>
+          <td>{{ stusem.hardship_requested }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
   <!-- Checkouts -->
   <div class="col-md-12 form-group required">
     <table id=student-table class='table table-striped'>
@@ -114,7 +153,8 @@ content %}
           <td>{{ checkout.return_condition }}</td>
           <td>{{ checkout.return_location }}</td>
           <td>{{ checkout.Notes }}</td>
-          <td><b><a style="text-decoration-line:none" href="{{ url_for('views.checkout_edit',id=checkout.id)}}">Return</a></b></td>
+          <td><b><a style="text-decoration-line:none"
+                href="{{ url_for('views.checkout_edit',id=checkout.id)}}">Return</a></b></td>
         </tr>
         {% endfor %}
       </tbody>
@@ -127,7 +167,7 @@ content %}
     <button type="submit" class="btn btn-primary">Submit</button>
   </div>
 </form>
-<br/>
+<br />
 <h4>ToDo:</h4>
 <ul>
   <li>Edit Mode: Add a delete button</li>

@@ -14,15 +14,15 @@
     </div>
   </div>
 </div>
-
+<br/>
 <!-- Table -->
 <table id=checkout-table class='table table-striped'>
   <thead id="table-head">
     <tr>
-      <th>exid</th>
       <th>First Name</th>
       <th>Last Name</th>
       <th>Email</th>
+      <th>Campus</th>
       <th>Checked Out</th>
       <th style="text-align:right">Actions</th>
     </tr>
@@ -30,10 +30,13 @@
   <tbody id="table-body">
     {% for student in students %}
     <tr>
-      <td><a href="{{ url_for('views.student_edit',id=student.id)}}">{{ student.external_id }}</a></td>
       <td>{{ student.first_name }}</td>
       <td>{{ student.last_name }}</td>
       <td>{{ student.email}}</td>
+      <td>{% if student.semesters and student.semesters | length > 0 %}
+          {{ student.semesters[0].campus.name }}
+          {% endif %}
+        </td>
       <td>
         {% for checkout in student.checkouts%}
         <a href="{{ url_for('views.checkout_edit', id=checkout.id)}}">{{ checkout.instrument.tag}}:{{ checkout.instrument.type.name }}</a>
@@ -86,22 +89,25 @@
   <li><del>List: Flash on delete success w/ message</del></li>
 </ul>
 
+{% endblock %}
+
+{% block scripts %} 
+
 <script>
-  // $('button[name="remove_levels"]').on('click', function (e) {
-  //   var $form = $(this).closest('form');
-  //   e.preventDefault();
-  //   $('#confirm_delete').modal({
-  //     backdrop: 'static',
-  //     keyboard: false
-  //   })
-  //     .on('click', '#delete', function (e) {
-  //       deleteStudent(9)
-  //     });
-  //   $("#cancel").on('click', function (e) {
-  //     e.preventDefault();
-  //     $('#confirm_delete').modal.model('hide');
-  //   });
-  // });
+  $(document).ready(function () {
+    $('#checkout-table').DataTable(
+      {
+        paging: false,
+        scrollY: 400
+      }
+    );
+  });
 </script>
 
+
+
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
 {% endblock %}
+
+
+
