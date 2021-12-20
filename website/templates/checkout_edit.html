@@ -18,7 +18,7 @@
   <div class="col-md-6 required">
     <div class="form-floating">
       <select class="form-select" name=student_id id=student_id >
-        <option>Select Student</option>
+        <option style='font-style: italic;'>Select Student</option>
         {% for student in students %}
         <option {% if student.id == checkout.student_id %} selected {% endif %} value="{{student.id}}">{{ student.first_name }} {{student.last_name }}</option>
         {% endfor %}

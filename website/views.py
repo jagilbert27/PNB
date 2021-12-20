@@ -236,7 +236,7 @@ def delete_note():
 @login_required
 def student_list():
     if request.method == 'GET':
-        students = Student.query.order_by(Student.external_id).all()
+        students = Student.query.order_by(Student.last_name).all()
         return render_template("student_list.html", students=students, user=current_user)
     
     student_id=request.form['student-id-to-delete']
@@ -458,7 +458,7 @@ def checkout_save(checkout,request):
 @login_required
 def checkout_list():
     if request.method == 'GET':
-        students = Student.query.all()
+        students = Student.query.order_by(Student.last_name).all()
         return render_template("checkout_list.html",students=students, today=date.today(), user=current_user)    
 
     checkout_id=request.form['id-to-delete']
@@ -487,7 +487,7 @@ def checkout_edit(id):
             checkout = checkout, 
             semester = semester,
             instruments = available_instruments,
-            students = Student.query.all(),
+            students = Student.query.order_by(Student.last_name).all(),
             instrument_conditions = InstrumentCondition.query.all(),
             readonly = False,
             user = current_user)
@@ -547,7 +547,7 @@ def checkout_new(student_id=None,instrument_id=None):
             checkout = checkout, 
             semester = semester,
             instruments = available_instruments,
-            students = Student.query.all(),
+            students = Student.query.order_by(Student.last_name).all(),
             instrument_conditions = InstrumentCondition.query.all(),
             user = current_user)
 
