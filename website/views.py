@@ -275,6 +275,7 @@ def student_new():
 @login_required
 def student_edit(id):
     student = Student.query.get_or_404(id)
+    instrument_types = InstrumentType.query.all()
     if request.method == 'GET':
         return render_template("student_edit.html", student=student, user=current_user)
     
@@ -289,8 +290,9 @@ def student_edit(id):
 @login_required
 def student_view(id):
     student = Student.query.get_or_404(id)
+    instrument_types = InstrumentType.query.all()
     if request.method == 'GET':
-        return render_template("student_edit.html", student=student, user=current_user, readonly=True)
+        return render_template("student_edit.html", student=student, instrument_types=instrument_types, user=current_user, readonly=True)
 
 
 # Student Delete

@@ -23,10 +23,10 @@ content %}
   {% endif %}
 </div>
 <br />
-<form class="row g-3" disabled="disabled" method="POST">
+<form class="row g-3" method="POST">
 
   <!-- First Name -->
-  <div class="col-md-4 required">
+  <div class="col-md-3 required">
     <div class="form-floating mb-3">
       <input type='text' class="form-control" name=first_name id=first_name required
         value="{% if student.first_name %}{{student.first_name}}{% endif %}">
@@ -35,7 +35,7 @@ content %}
   </div>
 
   <!-- Last Name -->
-  <div class="col-md-4 required">
+  <div class="col-md-3 required">
     <div class="form-floating mb-3">
       <input type='text' class="form-control" name=last_name id=last_name required
         value="{% if student.last_name %}{{student.last_name}}{% endif %}">
@@ -44,7 +44,7 @@ content %}
   </div>
 
   <!-- Birthday -->
-  <div class="col-md-4 required">
+  <div class="col-md-3 required">
     <div class="form-floating mb-3">
       <input type='date' class="form-control" name=checkout_date id=checkout_date required
         value="{{ student.birthday }}">
@@ -52,35 +52,272 @@ content %}
     </div>
   </div>
 
-    <!-- Email -->
-    <div class="col-md-4 required">
-      <div class="form-floating mb-3">
-        <input type='text' class="form-control" name=email id=email required
-          value="{% if student.email %}{{student.email}}{% endif %}">
-        <label for=email>Email</label>
-      </div>
+  <!-- Age -->
+  <div class="col-md-3 required">
+    <div class="form-floating mb-3">
+      <input type="text" disabled class="form-control" id=age name=age placeholder="Ex: ABC123" value="15">
+      <label for=age>Age</label>
     </div>
+  </div>
 
-
-    <!-- Phone -->
-    <div class="col-md-4 required">
-      <div class="form-floating mb-3">
-        <input type='text' class="form-control" name=phone id=phone required
-          value="{% if student.phone %}{{student.phone}}{% endif %}">
-        <label for=email>Phone</label>
-      </div>
+  <!-- Email -->
+  <div class="col-md-4 required">
+    <div class="form-floating mb-3">
+      <input type='text' class="form-control" name=email id=email required
+        value="{% if student.email %}{{student.email}}{% endif %}">
+      <label for=email>Email</label>
     </div>
+  </div>
 
-        <!-- Address -->
-        <div class="col-md-4 required">
-          <div class="form-floating mb-3">
-            <textarea class="form-control" name=address id=address required style="height:100%;"
-              rows=3> {% if student.address %}{{student.address | replace(",","\n")}}{% endif %}</textarea>
-            <label for=email>Address</label>
+
+  <!-- Phone -->
+  <div class="col-md-4 required">
+    <div class="form-floating mb-3">
+      <input type='text' class="form-control" name=phone id=phone required
+        value="{% if student.phone %}{{student.phone}}{% endif %}">
+      <label for=email>Phone</label>
+    </div>
+  </div>
+
+  <!-- Address -->
+  <div class="col-md-4 required">
+    <div class="form-floating mb-3">
+      <textarea class="form-control" name=address id=address required style="height:100%;"
+        rows=3> {% if student.address %}{{student.address | replace(",","\n")}}{% endif %}</textarea>
+      <label for=email>Address</label>
+    </div>
+  </div>
+
+
+
+
+  <!-- Semester Accordian -------------------------------------------------------------------------------- -->
+  <div class="accordion" id="accordionExample">
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingOne">
+        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne"
+          aria-expanded="true" aria-controls="collapseOne">
+
+
+
+          ** {{student.semesters[-1].name}} **
+        </button>
+      </h2>
+      <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne"
+        data-bs-parent="#accordionExample">
+        <div class="accordion-body row g-3" >
+
+          <div class='col-md-6' >
+
+            <div class='row' style="padding-top:10px; padding-bottom:10px">
+
+              <!-- Campus -->
+              <div class="col-md-4 required">
+                <div class="form-floating">
+                  <select class="form-select" name=campus_id id=CampusId>
+                    <option style='font-style: italic;'>Campus</option>
+                    <option>LCMS</option>
+                    <option>Long Branch</option>
+                    <option>Blackburn</option>
+                  </select>
+                  <label for="campus_id">Campus</label>
+                </div>
+              </div>
+
+              <!-- Grade -->
+              <div class="col-md-4 required">
+                <div class="form-floating">
+                  <select class="form-select" name=grade id=grade>
+                    <option style='font-style: italic;'>select</option>
+                    <option>5</option>
+                    <option>6</option>
+                    <option>7</option>
+                    <option>8</option>
+                    <option>9</option>
+                    <option>10</option>
+                    <option>11</option>
+                    <option>12</option>
+                  </select>
+                  <label for="grade">Grade</label>
+                </div>
+              </div>
+
+              <!-- Shirt Size -->
+              <div class="col-md-4 required">
+                <div class="form-floating">
+                  <select class="form-select" name=shirt_size_id id=shirt_size_id>
+                    <option style='font-style: italic;'>Tiny</option>
+                    <option>Child Small</option>
+                    <option>Child Medium</option>
+                    <option>And so on</option>
+                  </select>
+                  <label for="campus_id">Shirt Size</label>
+                </div>
+              </div>
+
+            </div>
+
+            <div class='row' style="padding-top:10px; padding-bottom:10px">
+              <!-- First Choice Type -->
+              <div class="col-md-6 required">
+                <div class="form-floating">
+                  <select class="form-select" name=instrument_type id=instrument_type
+                    aria-label="Select Instrument Type">
+                    <option>Select</option>
+                    {% for type in instrument_types %}
+                    <option>{{type.name}}</option>
+                    {% endfor %}
+                  </select>
+                  <label for="instrument_type">Instrument Type (First Choice)</label>
+                </div>
+              </div>
+
+              <!-- Second Choice -->
+              <div class="col-md-6 required">
+                <div class="form-floating">
+                  <select class="form-select" name=second_choice_instrument_type_id id=second_choice_instrument_type_id
+                    aria-label="Select Instrument Type">
+                    <option>Select</option>
+                    {% for type in instrument_types %}
+                    <option value="{{type.id}}">{{type.name}}</option>
+                    {% endfor %}
+                  </select>
+                  <label for="second_choice_instrument_type_id">Instrument Type (First Choice)</label>
+                </div>
+              </div>
+
+
+
+            </div>
           </div>
+
+          <div class='col-md-2'>
+
+
+            <div class="col-md-12 required">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
+                <label class="form-check-label" for="flexCheckDefault">Behavior Agreement</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" checked>
+                <label class="form-check-label" for="flexCheckChecked">Photo Agreement</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" checked>
+                <label class="form-check-label" for="flexCheckChecked">Hardship Requested</label>
+              </div>
+
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" checked>
+                <label class="form-check-label" for="flexCheckChecked">Home Schooled</label>
+              </div>
+            </div>
+          </div>
+
+          <div class='col-md-4' >
+            <!-- Address -->
+            <div class="col-md-12 required">
+              <div class="form-floating md-12">
+                <textarea class="form-control" name=semester_notes id=semester_notes required style="height:100%;"
+                  rows=3> {% if student.address %}{{student.address | replace(",","\n")}}{% endif %}</textarea>
+                <label for=semester_notes>Semester Notes</label>
+              </div>
+            </div>
+          </div>
+
+<div class='row g-3'>
+    <!-- Instrument -->
+    <div class="col-md-3 required">
+      <div class="form-floating">
+        <select class="form-select" name=instrument_id id=instrument_id >
+          <option>Select Instrument</option>
+          {% for instrument in instruments %}
+          <option {% if instrument.id == checkout.instrument_id %} selected {% endif %} value="{{instrument.id}}">{{ instrument.type.name }} {{ instrument.tag }}</option>
+          {% endfor %}
+        </select>
+        <label for="instrument_id">Instrument</label>
+      </div>
+    </div>
+
+  <!-- Checkout Condition -->
+  <div class="col-md-3 required">
+    <div class="form-floating">
+      <select class="form-select" name=checkout_condition id=checkout_condition aria-label="Floating label select example">
+        {% for condition in instrument_conditions %}
+        <option {% if condition.id == checkout.checkout_condition.id %} selected {% endif %} value="{{condition.id}}">{{condition.name}}</option>
+        {% endfor %}
+      </select>
+      <label for="checkout_condition">Out Condition</label>
+    </div>
+  </div>
+
+  <!-- Checkout Date -->
+  <div class="col-md-3 required">
+    <div class="form-floating mb-3">
+      <input type='date' class="form-control" name=checkout_date id=checkout_date required >
+      <label for=checkout_date >Out date</label>
+    </div>
+  </div>
+
+
+
+   <!-- Return Due Date -->
+   <div class="col-md-3 required">
+    <div class="form-floating mb-3">
+      <input type='date' class="form-control" name=due_date id=due_date >
+      <label for=due_date >Due Date</label>
+    </div>
+  </div>
+
+
         </div>
-    
+
+
+
+      </div>
+    </div>
+  </div>
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingTwo">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo"
+        aria-expanded="false" aria-controls="collapseTwo">
+        Accordion Item #2
+      </button>
+    </h2>
+    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo"
+      data-bs-parent="#accordionExample">
+      <div class="accordion-body">
+        <strong>This is the second item's accordion body.</strong> It is hidden by default, until the collapse plugin
+        adds the appropriate classes that we use to style each element. These classes control the overall appearance,
+        as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or
+        overriding our default variables. It's also worth noting that just about any HTML can go within the
+        <code>.accordion-body</code>, though the transition does limit overflow.
+      </div>
+    </div>
+  </div>
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingThree">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree"
+        aria-expanded="false" aria-controls="collapseThree">
+        Accordion Item #3
+      </button>
+    </h2>
+    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree"
+      data-bs-parent="#accordionExample">
+      <div class="accordion-body">
+        <strong>This is the third item's accordion body.</strong> It is hidden by default, until the collapse plugin
+        adds the appropriate classes that we use to style each element. These classes control the overall appearance,
+        as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or
+        overriding our default variables. It's also worth noting that just about any HTML can go within the
+        <code>.accordion-body</code>, though the transition does limit overflow.
+      </div>
+    </div>
+  </div>
+  </div>
+
   {% if student.id %}
+
 
   <!-- Semesters -->
   <div class="col-md-12 form-group required">
