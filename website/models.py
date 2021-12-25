@@ -1,3 +1,4 @@
+from sqlalchemy.sql.elements import RollbackToSavepointClause
 from . import db
 from flask_login import UserMixin
 from sqlalchemy.sql import func
@@ -5,11 +6,13 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
 
+
 class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.String(10000))
     date = db.Column(db.DateTime(timezone=True), default=func.now())
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -26,6 +29,7 @@ class Student(db.Model):
     checkouts = relationship("StudentInstrument",back_populates="student")
     semesters = relationship("StudentSemester",back_populates="student")
     guardians = relationship("StudentGuardian",back_populates="student")
+    classes = relationship("ClassStudent",back_populates="student")
     email =  db.Column( db.String(150))
     first_name =  db.Column( db.String(150))
     last_name =  db.Column( db.String(150))
@@ -33,6 +37,7 @@ class Student(db.Model):
     birthday = db.Column( db.Date)
     address = db.Column( db.String(150))
     phone = db.Column( db.String(20))
+
 
 class Instrument(db.Model):
     __tablename__ = 'instruments'
@@ -62,11 +67,13 @@ class InstrumentType(db.Model):
     instruments   = relationship(Instrument, back_populates='type')
     name          = db.Column(db.String(20))
 
+
 class InstrumentSize(db.Model):
     __tablename__ = 'instrument_sizes'
     id            = db.Column( db.Integer, primary_key=True)
     instruments   = relationship(Instrument, back_populates='size')
     name          = db.Column(db.String)
+
 
 class InstrumentStatus(db.Model):
     __tablename__ = 'instrument_statuses'
@@ -74,11 +81,13 @@ class InstrumentStatus(db.Model):
     instruments   = relationship(Instrument, back_populates='status')
     name          = db.Column(db.String)
 
+
 class InstrumentCondition(db.Model):
     __tablename__ = 'instrument_conditions'
     id            = db.Column( db.Integer, primary_key=True)
     instruments   = relationship(Instrument, back_populates='condition')
     name          = db.Column(db.String)
+
 
 class StudentInstrument(db.Model):
     __tablename__           = 'students_instruments'
@@ -99,10 +108,12 @@ class StudentInstrument(db.Model):
     return_location         = db.Column(db.String(100))
     notes                   = db.Column(db.String(1000))
 
+
 class Semester(db.Model):
     __tablename__    = 'semesters'
     id               = db.Column(db.Integer, primary_key=True)
     students         = relationship("StudentSemester",back_populates="semester") 
+    classes          = relationship("Class",back_populates="semester") 
     name             = db.Column(db.String)
     start_date       = db.Column(db.Date)
     end_date         = db.Column(db.Date)
@@ -111,6 +122,7 @@ class Semester(db.Model):
     first_checkout_date = db.Column(db.Date)
     last_due_date  = db.Column(db.Date)
 
+
 class StudentSemester(db.Model):
     __tablename__      = 'student_semester'
     id                 = db.Column( db.Integer, primary_key=True)
@@ -118,6 +130,8 @@ class StudentSemester(db.Model):
     student_id         = db.Column(db.ForeignKey('students.id'))
     semester_id        = db.Column(db.ForeignKey('semesters.id'))
     campus_id          = db.Column(db.ForeignKey('campuses.id'))
+    first_choice_instrument_type_id = db.Column(db.ForeignKey('instrument_types.id'))
+    second_choice_instrument_type_id = db.Column(db.ForeignKey('instrument_types.id'))
     student            = relationship("Student",back_populates="semesters")
     semester           = relationship("Semester",back_populates="students")
     campus             = relationship("Campus")
@@ -127,28 +141,30 @@ class StudentSemester(db.Model):
     behavior_agreement = db.Column( db.Boolean)
     photo_permission   = db.Column( db.Boolean)
     hardship_requested = db.Column( db.Boolean)
+    home_schooled      = db.Column( db.Boolean)
     tuition_charged    = db.Column( db.Numeric(8,2))
     rental_charged     = db.Column( db.Numeric(8,2))
     total_paid         = db.Column( db.Numeric(8,2))
     paid_date          = db.Column( db.Date)
-
-    first_choice_instrument_type_id = db.Column(db.ForeignKey('instrument_types.id'))
-    second_choice_instrument_type_id = db.Column(db.ForeignKey('instrument_types.id'))
-
+    notes              = db.Column(db.String(1000))
 
 
 class Person(db.Model):
-    __tablename__ = 'persons'
-    id            = db.Column( db.Integer, primary_key=True)
-    students      = relationship("StudentGuardian",back_populates="guardian")
-    name          = db.Column( db.String(150))
-    roles         = relationship("PersonsRoles",back_populates="person")
+    __tablename__       = 'persons'
+    id                  = db.Column( db.Integer, primary_key=True)
+    students            = relationship("StudentGuardian",back_populates="guardian")
+    name                = db.Column( db.String(150))
+    roles               = relationship("PersonsRoles",back_populates="person")
+    classes             = relationship("ClassTeacher",back_populates="teacher")  # Classes that this person as taught
+    notes               = db.Column(db.String(1000))
+
 
 class PersonRole(db.Model):
     __tablename__ = 'person_role'
     id          = db.Column( db.Integer, primary_key=True)
     name        = db.Column( db.String(150))  # Parent, Teacher, Administrator, Patron, Follower
     persons     = relationship("PersonsRoles",back_populates="role")
+
 
 class PersonsRoles(db.Model):
     __tablename__ = 'persons_roles'
@@ -158,25 +174,95 @@ class PersonsRoles(db.Model):
     person        = relationship("Person",back_populates="roles")
     role          = relationship("PersonRole",back_populates="persons")
 
+
 class GuardianType(db.Model):
     __tablename__   = 'guardian_types'
     id              = db.Column( db.Integer, primary_key=True)
     dependent_name  = db.Column( db.String(150)) #child, nephew, niece, grandchild
     guardian_name   = db.Column( db.String(150)) #mother, father, uncle, aunt...
 
+
 class StudentGuardian(db.Model):
-    __tablename__    = 'students_guardians'
-    __table_args__    = (UniqueConstraint('student_id', 'guardian_id', name='_unique_student_guardian'),)    
-    id               = db.Column( db.Integer, primary_key=True)
-    student_id       = db.Column(db.ForeignKey('students.id'))
-    guardian_id      = db.Column(db.ForeignKey('persons.id'))
-    guardian_type_id = db.Column(db.ForeignKey('guardian_types.id'))
-    student          = relationship("Student",back_populates="guardians")
-    guardian         = relationship("Person", back_populates="students")
-    guardian_type    = relationship("GuardianType")
+    __tablename__       = 'students_guardians'
+    __table_args__      = (UniqueConstraint('student_id', 'guardian_id', name='_unique_student_guardian'),)    
+    id                  = db.Column( db.Integer, primary_key=True)
+    student_id          = db.Column(db.ForeignKey('students.id'))
+    guardian_id         = db.Column(db.ForeignKey('persons.id'))
+    guardian_type_id    = db.Column(db.ForeignKey('guardian_types.id'))
+    student             = relationship("Student",back_populates="guardians")
+    guardian            = relationship("Person", back_populates="students")
+    guardian_type       = relationship("GuardianType")
+    notes               = db.Column(db.String(1000))
+
 
 class Campus(db.Model):
     __tablename__   = 'campuses'
     id              = db.Column( db.Integer, primary_key=True)
     name            = db.Column( db.String(150))
+    address         = db.Column( db.String(150))
+    rooms           = relationship("Room", back_populates="campus")
 
+
+class ShirtSize(db.Model):
+    __tablename__   = 'shirt_sizes'
+    id              = db.Column( db.Integer, primary_key=True)
+    name            = db.Column( db.String(150))
+
+
+class Course(db.Model):
+    __tablename__       = 'courses'
+    id                  = db.Column( db.Integer, primary_key=True)
+    name                = db.Column( db.String(150))  #Beginning Fiddle
+    classes             = relationship("Class",back_populates='course')
+    ideal_size          = db.Column( db.Integer)
+    max_size            = db.Column( db.Integer)
+    notes               = db.Column( db.String(1000))
+
+
+class Room(db.Model):
+    __tablename__       = 'rooms'
+    id                  = db.Column( db.Integer, primary_key=True)
+    name                = db.Column( db.String(150))  #Room 101
+    campus_id           = db.Column( db.ForeignKey('campuses.id'))
+    campus              = relationship("Campus",back_populates="rooms")
+    classes             = relationship("Class",back_populates='room')
+    student_capacity    = db.Column( db.Integer)  # 15
+    notes               = db.Column(db.String(1000))
+
+
+class Class(db.Model):
+    __tablename__       = 'classes'
+    id                  = db.Column( db.Integer, primary_key=True)
+    name                = db.Column( db.String(150))
+    semester_id         = db.Column( db.ForeignKey('semesters.id'))# 1:1
+    course_id           = db.Column( db.ForeignKey('courses.id'))
+    room_id             = db.Column( db.ForeignKey('rooms.id'))
+    semester            = relationship("Semester",back_populates="classes")
+    course              = relationship("Course",back_populates="classes")
+    room                = relationship("Room",back_populates="classes")
+    teachers            = relationship("ClassTeacher",back_populates="class_")
+    students            = relationship("ClassStudent",back_populates="class_")
+    start_datetime      = db.Column( db.DateTime)
+    notes               = db.Column( db.String(1000))
+
+
+class ClassStudent(db.Model):
+    __tablename__   = 'classes_students'
+    id              = db.Column( db.Integer, primary_key=True)
+    student_id      = db.Column( db.ForeignKey('students.id'))
+    class_id        = db.Column( db.ForeignKey('classes.id'))
+    student         = relationship("Student",back_populates="classes")
+    class_          = relationship("Class",back_populates="students")
+    present         = db.Column( db.Boolean)
+    notes           = db.Column( db.String(150))
+
+
+class ClassTeacher(db.Model):
+    __tablename__   = 'classes_teachers'
+    id              = db.Column( db.Integer, primary_key=True)
+    person_id       = db.Column( db.ForeignKey('persons.id'))
+    class_id        = db.Column( db.ForeignKey('classes.id'))
+    teacher         = relationship("Person",back_populates="classes")
+    class_          = relationship("Class",back_populates="teachers")
+    present         = db.Column( db.Boolean)
+    notes           = db.Column( db.String(150))

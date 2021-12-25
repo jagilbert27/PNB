@@ -46,7 +46,7 @@ content %}
   <!-- Birthday -->
   <div class="col-md-3 required">
     <div class="form-floating mb-3">
-      <input type='date' class="form-control" name=checkout_date id=checkout_date required
+      <input type='date' class="form-control" name=birthday id=birthday required
         value="{{ student.birthday }}">
       <label for=checkout_date>Birthday</label>
     </div>
@@ -69,7 +69,6 @@ content %}
     </div>
   </div>
 
-
   <!-- Phone -->
   <div class="col-md-4 required">
     <div class="form-floating mb-3">
@@ -83,7 +82,7 @@ content %}
   <div class="col-md-4 required">
     <div class="form-floating mb-3">
       <textarea class="form-control" name=address id=address required style="height:100%;"
-        rows=3> {% if student.address %}{{student.address | replace(",","\n")}}{% endif %}</textarea>
+        rows=3>{% if student.address %}{{student.address | replace(",","\n")}}{% endif %}</textarea>
       <label for=email>Address</label>
     </div>
   </div>
@@ -93,34 +92,33 @@ content %}
 
   <!-- Semester Accordian -------------------------------------------------------------------------------- -->
   <div class="accordion" id="accordionExample">
+
+    {% for student_semester in student.semesters%}
+
+
+
     <div class="accordion-item">
       <h2 class="accordion-header" id="headingOne">
         <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne"
           aria-expanded="true" aria-controls="collapseOne">
-
-
-
-          ** {{student.semesters[-1].name}} **
+          Semester {{student_semester.semester.name}}
         </button>
       </h2>
       <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne"
         data-bs-parent="#accordionExample">
-        <div class="accordion-body row g-3" >
-
-          <div class='col-md-6' >
-
-            <div class='row' style="padding-top:10px; padding-bottom:10px">
+        <div class="accordion-body row g-3">
+          <div class='col-md-6'>
+            <div class='row' >
 
               <!-- Campus -->
               <div class="col-md-4 required">
                 <div class="form-floating">
-                  <select class="form-select" name=campus_id id=CampusId>
-                    <option style='font-style: italic;'>Campus</option>
-                    <option>LCMS</option>
-                    <option>Long Branch</option>
-                    <option>Blackburn</option>
+                  <select class="form-select" id=s_{{student_semester.semester.id}}_campus_id name=s_{{student_semester.semester.id}}_campus_id>
+                    {% for campus in campuses %}
+                      <option value = campus.id {% if campus.id == student_semester.campus.id %}selected{% endif %}>{{ campus.name }}</option>
+                    {% endfor %}
                   </select>
-                  <label for="campus_id">Campus</label>
+                  <label for="s_{{student_semester.semester.id}}_campus_id">Campus</label>
                 </div>
               </div>
 
@@ -129,14 +127,9 @@ content %}
                 <div class="form-floating">
                   <select class="form-select" name=grade id=grade>
                     <option style='font-style: italic;'>select</option>
-                    <option>5</option>
-                    <option>6</option>
-                    <option>7</option>
-                    <option>8</option>
-                    <option>9</option>
-                    <option>10</option>
-                    <option>11</option>
-                    <option>12</option>
+                      {% for grade in range(5,13) %}
+                        <option  {% if grade == student_semester.grade %}selected{% endif %}>{{ grade }}</option>
+                        {% endfor %}
                   </select>
                   <label for="grade">Grade</label>
                 </div>
@@ -146,10 +139,10 @@ content %}
               <div class="col-md-4 required">
                 <div class="form-floating">
                   <select class="form-select" name=shirt_size_id id=shirt_size_id>
-                    <option style='font-style: italic;'>Tiny</option>
-                    <option>Child Small</option>
-                    <option>Child Medium</option>
-                    <option>And so on</option>
+                    <option style='font-style: italic;'>Select</option>
+                    {% for size in shirt_sizes %}
+                      <option value = size.id {% if size.id == student_semester.shirt_size.id %}selected{% endif %}>{{ size.name }}</option>
+                    {% endfor %}
                   </select>
                   <label for="campus_id">Shirt Size</label>
                 </div>
@@ -157,7 +150,7 @@ content %}
 
             </div>
 
-            <div class='row' style="padding-top:10px; padding-bottom:10px">
+            <div class='row' style="padding-top:20px;">
               <!-- First Choice Type -->
               <div class="col-md-6 required">
                 <div class="form-floating">
@@ -196,125 +189,131 @@ content %}
 
             <div class="col-md-12 required">
               <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
-                <label class="form-check-label" for="flexCheckDefault">Behavior Agreement</label>
+                <input class="form-check-input" type="checkbox" value="" id="behavior_agreement" {% if student_semester.behavior_agreement %} checked {% endif %} >
+                <label class="form-check-label" for="behavior_agreement">Behavior Agreement </label>
               </div>
               <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" checked>
-                <label class="form-check-label" for="flexCheckChecked">Photo Agreement</label>
+                <input class="form-check-input" type="checkbox" value="" id="photo_agreement"  {% if student_semester.photo_agreement %} checked {% endif %} >
+                <label class="form-check-label" for="photo_agreement">Photo Agreement</label>
               </div>
               <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" checked>
-                <label class="form-check-label" for="flexCheckChecked">Hardship Requested</label>
+                <input class="form-check-input" type="checkbox" value="" id="hardship_request"  {% if student_semester.hardship_requested %} checked {% endif %} >
+                <label class="form-check-label" for="hardship_request">Hardship Requested</label>
               </div>
-
               <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" checked>
-                <label class="form-check-label" for="flexCheckChecked">Home Schooled</label>
+                <input class="form-check-input" type="checkbox" value="" id="home_schooled"  {% if student_semester.home_schooled %} checked {% endif %}  >
+                <label class="form-check-label" for="home_schooled">Home Schooled</label>
               </div>
             </div>
           </div>
 
-          <div class='col-md-4' >
-            <!-- Address -->
+          <div class='col-md-4'>
+            <!-- Notes -->
             <div class="col-md-12 required">
               <div class="form-floating md-12">
                 <textarea class="form-control" name=semester_notes id=semester_notes required style="height:100%;"
-                  rows=3> {% if student.address %}{{student.address | replace(",","\n")}}{% endif %}</textarea>
+                  rows=3> {% if student.notes %}{{student.notes}}{% endif %}</textarea>
                 <label for=semester_notes>Semester Notes</label>
               </div>
             </div>
           </div>
+  
 
-<div class='row g-3'>
-    <!-- Instrument -->
-    <div class="col-md-3 required">
-      <div class="form-floating">
-        <select class="form-select" name=instrument_id id=instrument_id >
-          <option>Select Instrument</option>
-          {% for instrument in instruments %}
-          <option {% if instrument.id == checkout.instrument_id %} selected {% endif %} value="{{instrument.id}}">{{ instrument.type.name }} {{ instrument.tag }}</option>
-          {% endfor %}
-        </select>
-        <label for="instrument_id">Instrument</label>
-      </div>
-    </div>
+            <!-- Instrument -->
+            <div class="col-md-3 required">
+              <div class="form-floating">
+                <select class="form-select" name=instrument_id id=instrument_id>
+                  <option>Select Instrument</option>
+                  {% for instrument in instruments %}
+                  <option {% if instrument.id==checkout.instrument_id %} selected {% endif %} value="{{instrument.id}}">
+                    {{ instrument.type.name }} {{ instrument.tag }}</option>
+                  {% endfor %}
+                </select>
+                <label for="instrument_id">Instrument</label>
+              </div>
+            </div>
 
-  <!-- Checkout Condition -->
-  <div class="col-md-3 required">
-    <div class="form-floating">
-      <select class="form-select" name=checkout_condition id=checkout_condition aria-label="Floating label select example">
-        {% for condition in instrument_conditions %}
-        <option {% if condition.id == checkout.checkout_condition.id %} selected {% endif %} value="{{condition.id}}">{{condition.name}}</option>
-        {% endfor %}
-      </select>
-      <label for="checkout_condition">Out Condition</label>
-    </div>
-  </div>
+            <!-- Checkout Condition -->
+            <div class="col-md-3 required">
+              <div class="form-floating">
+                <select class="form-select" name=checkout_condition id=checkout_condition
+                  aria-label="Floating label select example">
+                  {% for condition in instrument_conditions %}
+                  <option {% if condition.id==checkout.checkout_condition.id %} selected {% endif %}
+                    value="{{condition.id}}">{{condition.name}}</option>
+                  {% endfor %}
+                </select>
+                <label for="checkout_condition">Out Condition</label>
+              </div>
+            </div>
 
-  <!-- Checkout Date -->
-  <div class="col-md-3 required">
-    <div class="form-floating mb-3">
-      <input type='date' class="form-control" name=checkout_date id=checkout_date required >
-      <label for=checkout_date >Out date</label>
-    </div>
-  </div>
+            <!-- Checkout Date -->
+            <div class="col-md-3 required">
+              <div class="form-floating mb-3">
+                <input type='date' class="form-control" name=checkout_date id=checkout_date required>
+                <label for=checkout_date>Out date</label>
+              </div>
+            </div>
 
 
 
-   <!-- Return Due Date -->
-   <div class="col-md-3 required">
-    <div class="form-floating mb-3">
-      <input type='date' class="form-control" name=due_date id=due_date >
-      <label for=due_date >Due Date</label>
-    </div>
-  </div>
+            <!-- Return Due Date -->
+            <div class="col-md-3 required">
+              <div class="form-floating mb-3">
+                <input type='date' class="form-control" name=due_date id=due_date>
+                <label for=due_date>Due Date</label>
+              </div>
+            </div>
+
+
+          </div>
+
 
 
         </div>
+      </div>
+    </div>
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingTwo">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo"
+          aria-expanded="false" aria-controls="collapseTwo">
+          Accordion Item #2
+        </button>
+      </h2>
+      <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo"
+        data-bs-parent="#accordionExample">
+        <div class="accordion-body">
+          <strong>This is the second item's accordion body.</strong> It is hidden by default, until the collapse plugin
+          adds the appropriate classes that we use to style each element. These classes control the overall appearance,
+          as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or
+          overriding our default variables. It's also worth noting that just about any HTML can go within the
+          <code>.accordion-body</code>, though the transition does limit overflow.
+        </div>
+      </div>
+    </div>
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingThree">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+          data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+          Accordion Item #3
+        </button>
+      </h2>
+      <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree"
+        data-bs-parent="#accordionExample">
+        <div class="accordion-body">
+          <strong>This is the third item's accordion body.</strong> It is hidden by default, until the collapse plugin
+          adds the appropriate classes that we use to style each element. These classes control the overall appearance,
+          as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or
+          overriding our default variables. It's also worth noting that just about any HTML can go within the
+          <code>.accordion-body</code>, though the transition does limit overflow.
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
 
 
 
-      </div>
-    </div>
-  </div>
-  <div class="accordion-item">
-    <h2 class="accordion-header" id="headingTwo">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo"
-        aria-expanded="false" aria-controls="collapseTwo">
-        Accordion Item #2
-      </button>
-    </h2>
-    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo"
-      data-bs-parent="#accordionExample">
-      <div class="accordion-body">
-        <strong>This is the second item's accordion body.</strong> It is hidden by default, until the collapse plugin
-        adds the appropriate classes that we use to style each element. These classes control the overall appearance,
-        as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or
-        overriding our default variables. It's also worth noting that just about any HTML can go within the
-        <code>.accordion-body</code>, though the transition does limit overflow.
-      </div>
-    </div>
-  </div>
-  <div class="accordion-item">
-    <h2 class="accordion-header" id="headingThree">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree"
-        aria-expanded="false" aria-controls="collapseThree">
-        Accordion Item #3
-      </button>
-    </h2>
-    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree"
-      data-bs-parent="#accordionExample">
-      <div class="accordion-body">
-        <strong>This is the third item's accordion body.</strong> It is hidden by default, until the collapse plugin
-        adds the appropriate classes that we use to style each element. These classes control the overall appearance,
-        as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or
-        overriding our default variables. It's also worth noting that just about any HTML can go within the
-        <code>.accordion-body</code>, though the transition does limit overflow.
-      </div>
-    </div>
-  </div>
-  </div>
 
   {% if student.id %}
 
@@ -404,6 +403,24 @@ content %}
     <button type="submit" class="btn btn-primary">Submit</button>
   </div>
 </form>
+
+{% block scripts %}
+<script>
+  $(document).ready(function () {
+    $('#phone')[0].value = formatPhoneNumber($('#phone')[0].value );
+  });
+
+  function formatPhoneNumber(phoneNumberString) {
+    var cleaned = ('' + phoneNumberString).replace(/\D/g, '');
+    var match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+    if (match) {
+      return '(' + match[1] + ') ' + match[2] + '-' + match[3];
+   }
+    return null;
+  }
+</script>
+{% endblock %}
+
 <br />
 <h4>ToDo:</h4>
 <ul>

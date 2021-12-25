@@ -10,7 +10,8 @@ import json
 from datetime import date, datetime
 from .models import User, Note, \
     Student, Instrument, StudentInstrument, InstrumentType, InstrumentSize, InstrumentCondition, InstrumentStatus, \
-    Semester, StudentSemester, Campus, GuardianType, StudentGuardian, Person, PersonRole, PersonsRoles
+    Semester, StudentSemester, Campus, GuardianType, StudentGuardian, Person, PersonRole, PersonsRoles, ShirtSize, \
+        Course, Room, Class, ClassStudent, ClassTeacher
 
 views = Blueprint('views', __name__)
 
@@ -64,6 +65,14 @@ def fill():
     Person.query.delete()
     PersonRole.query.delete()
     PersonsRoles.query.delete()
+    Course.query.delete()
+    Room.query.delete()
+    Class.query.delete()
+    ClassStudent.query.delete()
+    ClassTeacher.query.delete()
+    ShirtSize.query.delete()
+    Room.query.delete()
+
     db.session.commit()
     flash('DB Cleared')
 
@@ -122,21 +131,57 @@ def fill():
     # Guardians (persons)
     db.session.add(Person(id=1,name='Grandpa Adams'))
     db.session.add(Person(id=2,name='Grandma Adams'))
+    # Teachers (persons)
+    db.session.add(Person(id=3,name='Ms. Frizzle'))
+    db.session.add(Person(id=4,name='Bill Nye'))
 
     # Person Roles
     db.session.add(PersonRole(id=1,name='Guardian'))
     db.session.add(PersonRole(id=2,name='Teacher'))
     db.session.add(PersonRole(id=3,name='Staff'))
-
-    # Grandpa Adams is a guardian
-    db.session.add(PersonsRoles(id=1,person_id=1,role_id=1))
-
+    
+    # PersonsRoles
+    db.session.add(PersonsRoles(id=1,person_id=1,role_id=1)) # Grandpa Adams is a guardian
+    db.session.add(PersonsRoles(id=2,person_id=3,role_id=2)) # Ms. Frizzle is a teacher
+    db.session.add(PersonsRoles(id=3,person_id=4,role_id=2)) # Bill Nye is a teacher
 
     # Student Guardians
     db.session.add(StudentGuardian(id=1,student_id=1,guardian_id=1,guardian_type_id=2))
     db.session.add(StudentGuardian(id=2,student_id=1,guardian_id=2,guardian_type_id=2))
+
+    db.session.add(ShirtSize(name="Decline", id=0))
+    db.session.add(ShirtSize(name="youth XS"))
+    db.session.add(ShirtSize(name="youth SM"))
+    db.session.add(ShirtSize(name="youth MD"))
+    db.session.add(ShirtSize(name="youth LG"))
+    db.session.add(ShirtSize(name="youth XL"))
+    db.session.add(ShirtSize(name="adult XS"))
+    db.session.add(ShirtSize(name="adult SM"))
+    db.session.add(ShirtSize(name="adult MD"))
+    db.session.add(ShirtSize(name="adult LG"))
+    db.session.add(ShirtSize(name="adult XL"))
+    db.session.add(ShirtSize(name="adult XXL"))
  
-    # Person Roles
+    db.session.add(Course(id=1, name='Beginning Fiddle',ideal_size=4, max_size=7))
+    db.session.add(Course(id=2, name='Advanced Banjo',ideal_size=5, max_size=7))
+
+    db.session.add(Room(id=1, name='Room 101', campus_id=1, student_capacity=20))
+    db.session.add(Room(id=2, name='Room 101', campus_id=2, student_capacity=30))
+
+    db.session.add(Class(id=1, semester_id=1, course_id=1, room_id=1, start_datetime = datetime(2021,10,1,16,30))) #Winter 2021, BegFid, RM101, LCMS, 10/1
+    db.session.add(Class(id=2, semester_id=1, course_id=1, room_id=1, start_datetime = datetime(2021,10,7,16,30))) #Winter 2021, BegFid, RM101, LCMS, 10/7
+    db.session.add(Class(id=3, semester_id=1, course_id=2, room_id=2, start_datetime = datetime(2021,10,1,16,30))) #Winter 2021, AdvBjo, RM101, Blackburn, 10/1
+    db.session.add(Class(id=4, semester_id=1, course_id=2, room_id=2, start_datetime = datetime(2021,10,1,16,30))) #Winter 2021, BegFid, RM101, Blackburn, 10/7
+
+    db.session.add(ClassTeacher(id=1, person_id=3, class_id=1, present=True))   # Frizzle teaches BegFid, 10/1
+    db.session.add(ClassTeacher(id=2, person_id=3, class_id=2))                 # Frizzle teaches BegFid, 10/7, present=unknown bc future
+    db.session.add(ClassTeacher(id=3, person_id=4, class_id=3, present=True))   # Bill teachs AdvBjo 10/1
+    db.session.add(ClassTeacher(id=4, person_id=4, class_id=4))                 # Bill teachs AdvBjo 10/7, present=unknown bc future
+
+    db.session.add(ClassStudent(id=1, student_id=-1, class_id=1, present=True)) # Alpha attendeed BegFid 10/1 LCMS
+    db.session.add(ClassStudent(id=2, student_id=-1, class_id=2))               # Alpha scheduled to attend BegFid 10/7 at LCMS
+    db.session.add(ClassStudent(id=3, student_id=-2, class_id=1, present=True)) # Bravo attendeed BegFid 10/1 BB
+    db.session.add(ClassStudent(id=4, student_id=-2, class_id=4))               # Alpha scheduled to attend BegFid 10/7 BB
 
     db.session.commit()
 
@@ -145,53 +190,87 @@ def fill():
     # Tests
 
     # Student
-    student = Student.query.get(1)
-    assert student.first_name == 'Alpha'
+    student_alpha = Student.query.get(1)
+    assert student_alpha.first_name == 'Alpha'
 
     # Semester
-    semester = Semester.query.get(1)
-    assert semester.name == 'Winter 2021'
+    semester_winter_2021 = Semester.query.get(1)
+    assert semester_winter_2021.name == 'Winter 2021'
 
     # Campus
-    campus = Campus.query.get(3)
-    assert campus.name == 'Long Branch'
+    campus_longbranch = Campus.query.get(3)
+    assert campus_longbranch.name == 'Long Branch'
 
     # StudentSemester:student
-    assert student.semesters[0].semester.name == 'Winter 2021'
-    assert semester.students[0].student.first_name == 'Alpha'
+    assert student_alpha.semesters[0].semester.name == 'Winter 2021'
+    assert semester_winter_2021.students[0].student.first_name == 'Alpha'
 
     # StudentSemester:Campus
-    assert semester.students[0].campus_id == 1
-    assert student.semesters[0].campus.name == 'LCMS'
+    assert semester_winter_2021.students[0].campus_id == 1
+    assert student_alpha.semesters[0].campus.name == 'LCMS'
 
     # Guardian Type
-    guardian_type = GuardianType.query.get(2)
-    assert guardian_type.dependent_name == 'grandchild'
-    assert guardian_type.guardian_name == 'grandparent'
+    grandchild_guardian_type = GuardianType.query.get(2)
+    assert grandchild_guardian_type.dependent_name == 'grandchild'
+    assert grandchild_guardian_type.guardian_name == 'grandparent'
 
     # persons (Guardians)
-    guardian = Person.query.get(1)
-    guardian.name = 'Grandpa Adams'
+    person_grandpa_adams = Person.query.get(1)
+    assert person_grandpa_adams.name == 'Grandpa Adams'
 
     # StudentGuardian
-    assert student.guardians[0].student_id == 1
-    assert student.guardians[0].student.first_name == 'Alpha'
-    assert student.guardians[0].guardian_id == 1
-    assert student.guardians[0].guardian.name == 'Grandpa Adams'
-    assert student.guardians[0].guardian_type_id == 2
-    assert student.guardians[0].guardian_type.dependent_name == 'grandchild'
-    assert student.guardians[0].guardian_type.guardian_name == 'grandparent'
+    assert student_alpha.guardians[0].student_id == 1
+    assert student_alpha.guardians[0].student.first_name == 'Alpha'
+    assert student_alpha.guardians[0].guardian_id == 1
+    assert student_alpha.guardians[0].guardian.name == 'Grandpa Adams'
+    assert student_alpha.guardians[0].guardian_type_id == 2
+    assert student_alpha.guardians[0].guardian_type.dependent_name == 'grandchild'
+    assert student_alpha.guardians[0].guardian_type.guardian_name == 'grandparent'
 
     # Person Roles
-    assert guardian.roles[0].role_id == 1
-    assert guardian.roles[0].role.name == 'Guardian'
+    assert PersonRole.query.get(1).name == 'Guardian'
+    assert PersonRole.query.get(2).name == 'Teacher'
+    assert PersonRole.query.get(3).name == 'Staff'
 
-    #Role
-    person_role = PersonRole.query.get(1)
-    assert person_role.persons[0].id == 1
-    assert person_role.persons[0].person.name == 'Grandpa Adams'
+    # Person Roles
+    assert person_grandpa_adams.roles[0].role_id == 1
+    assert person_grandpa_adams.roles[0].role.name == 'Guardian'
 
-    # assert student.guardians[0].student.first_name == 'Alpha'
+    # Role
+    person_role_guardian = PersonRole.query.get(1)
+    assert person_role_guardian.persons[0].id == 1
+    assert person_role_guardian.persons[0].person.name == 'Grandpa Adams'
+    role_teacher = PersonRole.query.filter(PersonRole.name == 'Teacher').first()
+    assert role_teacher.name == 'Teacher'
+
+    # Course
+    course_begfid = Course.query.filter(Course.name=='Beginning Fiddle').first()
+    assert course_begfid.name == 'Beginning Fiddle'
+    assert course_begfid.ideal_size == 4
+
+    #Class
+    class_wtrbegfid = Class.query.get(1)
+    assert class_wtrbegfid.semester.name == 'Winter 2021'
+    assert class_wtrbegfid.course.name == 'Beginning Fiddle'
+    assert class_wtrbegfid.room.name == 'Room 101'
+    assert class_wtrbegfid.room.student_capacity == 20
+    assert class_wtrbegfid.room.campus.name == 'LCMS'
+    assert len(class_wtrbegfid.students) == 2
+    # assert class_wtrbegfid.students[0].student.first_name == 'Alpha'
+    # assert class_wtrbegfid.teachers[0].teacher.name == 'Mz. Frizzle' 
+
+    #Class Teacher
+    class_teacher_wtrbegfid = ClassTeacher.query.get(1)
+    assert class_teacher_wtrbegfid.class_.start_datetime ==  datetime(2021,10,1,16,30)
+    assert class_teacher_wtrbegfid.class_.course.name == 'Beginning Fiddle'
+    assert class_teacher_wtrbegfid.teacher.name == 'Ms. Frizzle' 
+    assert class_teacher_wtrbegfid.present == True
+
+    #Class Student
+    class_student_alpha_wtrbegfid = ClassStudent.query.get(1)
+    assert class_student_alpha_wtrbegfid.class_.start_datetime ==  datetime(2021,10,1,16,30)
+    assert class_student_alpha_wtrbegfid.class_.course.name == 'Beginning Fiddle'
+    assert class_student_alpha_wtrbegfid.class_.teachers[0].teacher.name == 'Ms. Frizzle'
 
     flash('DB model tests pass')
 
@@ -230,6 +309,7 @@ def delete_note():
 
     return jsonify({})
 
+# Student Blueprint ----------------------------------------------------------------------
 
 # Student List
 @views.route('/students', methods=['GET','POST'])
@@ -244,56 +324,74 @@ def student_list():
     msg = f'Deleted Student {student.first_name} {student.last_name}'
     db.session.delete(student)
     db.session.commit()
-    flash(msg, category='warning')
+    flash(msg, category='success')
     return redirect(url_for('views.student_list'))
 
-#Populate a student object from a request
-def student_gather(student,request):
-    student.email = request.form.get('email')
-    student.first_name = request.form.get('first_name')
-    student.last_name = request.form.get('last_name')
+def get_student(student,readonly=True):
+    return render_template(
+        "student_edit.html", 
+        student=student, 
+        instrument_types= InstrumentType.query.all(), 
+        campuses = Campus.query.all(),
+        shirt_sizes = ShirtSize.query.all(),
+        user=current_user, 
+        readonly=readonly)
+
+def post_student(student,form):
+    student.email = form.get('email')
+    student.first_name = form.get('first_name')
+    student.last_name = form.get('last_name')
+    # student.notes = form.get('student_notes')
+    student.address = form.get('address')
+    student.phone = form.get('phone')
+
+    try:
+        student.birthday = datetime.strptime(form['birthday'],'%Y-%m-%d')
+    except: 
+        student.birthday = None
+
+    student.semesters[0].campus_id = form.get('s_1_campus_id')
+
+    db.session.add(student)
+    db.session.commit()
 
 # Student New
-@views.route('/student/new', methods=['GET','POST'])
+@views.route('/student/add', methods=['GET','POST'])
 @login_required
 def student_new():
     if request.method == 'GET':
-        return render_template("student_edit.html", student=Student(), user=current_user)
-
-    # Delete Student
-    # ToDo: see if I can post the form to /student/delete/id instead of here
+        # Set default values for student
+        default_semester = Semester.query.filter(datetime.now() >= Semester.start_date,datetime.now() <= Semester.end_date).first()
+        student = Student()
+        student_semester = StudentSemester(
+            semester_id = default_semester.id,
+            student_id = student.id)
+        return get_student(student,readonly=False)
+    
     student = Student()
-    db.session.add(student)
-    student_gather(student,request)
-    db.session.commit()
+    post_student(student, request.form)
     flash(f'Added Student {student.first_name} {student.last_name}', category='success')
     return redirect(url_for('views.student_list'))
-
 
 # Student Edit
 @views.route('/student/edit/<int:id>', methods=['GET','POST'])
 @login_required
 def student_edit(id):
-    student = Student.query.get_or_404(id)
-    instrument_types = InstrumentType.query.all()
+    student=Student.query.get_or_404(id)
     if request.method == 'GET':
-        return render_template("student_edit.html", student=student, user=current_user)
-    
-    student_gather(student, request)
-    db.session.commit()
+        return get_student(student,readonly=False)
+
+    post_student(student,request.form)
     flash(f'Updated Student {student.first_name} {student.last_name}', category='success')
     return redirect(url_for('views.student_list'))
-
 
 # Student View
 @views.route('/student/view/<int:id>', methods=['GET'])
 @login_required
 def student_view(id):
-    student = Student.query.get_or_404(id)
-    instrument_types = InstrumentType.query.all()
+    student=Student.query.get_or_404(id)
     if request.method == 'GET':
-        return render_template("student_edit.html", student=student, instrument_types=instrument_types, user=current_user, readonly=True)
-
+        return get_student(student)
 
 # Student Delete
 @views.route('/delete-student', methods=['POST'])
