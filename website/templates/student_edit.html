@@ -168,14 +168,14 @@ content %}
               <!-- Second Choice -->
               <div class="col-md-6 required">
                 <div class="form-floating">
-                  <select class="form-select" name=second_choice_instrument_type_id id=second_choice_instrument_type_id
+                  <select class="form-select" name=instrument_type_1_id id=instrument_type_1_id
                     aria-label="Select Instrument Type">
                     <option>Select</option>
                     {% for type in instrument_types %}
                     <option value="{{type.id}}">{{type.name}}</option>
                     {% endfor %}
                   </select>
-                  <label for="second_choice_instrument_type_id">Instrument Type (First Choice)</label>
+                  <label for="instrument_type_2_id">Instrument Type (Second Choice)</label>
                 </div>
               </div>
 

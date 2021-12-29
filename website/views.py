@@ -3,15 +3,15 @@ import sys
 from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for
 from flask_login import login_required, current_user
 import pandas
-from sqlalchemy.sql.expression import null
+from sqlalchemy.sql.expression import null, true
 from .models import Note, Student
 from . import db
 import json
 from datetime import date, datetime
-from .models import User, Note, \
-    Student, Instrument, StudentInstrument, InstrumentType, InstrumentSize, InstrumentCondition, InstrumentStatus, \
-    Semester, StudentSemester, Campus, GuardianType, StudentGuardian, Person, PersonRole, PersonsRoles, ShirtSize, \
-        Course, Room, Class, ClassStudent, ClassTeacher
+from .models import User, Note,  Student, Person, Course, Room, Class, Instrument, Campus, Semester, \
+    ClassDay, ClassStudent, ClassTeacher, ClassDayStudent, ClassDayTeacher, PersonRole, PersonsRoles, \
+    SkillLevel, StudentInstrument, InstrumentType, InstrumentSize, InstrumentCondition, InstrumentStatus,  \
+    StudentSemester, Campus, GuardianType, StudentGuardian, ShirtSize \
 
 views = Blueprint('views', __name__)
 
@@ -48,6 +48,11 @@ class InstrumentSizes(enum.Enum):
     _34  = 3
     Full = 4
 
+class SkillLevels(enum.Enum):
+    Beginner = 1
+    Intermediate = 2
+    Advanced = 3
+
 @views.route('/Fill', methods=['GET', 'POST'])
 def fill():
     StudentInstrument.query.delete()
@@ -68,10 +73,15 @@ def fill():
     Course.query.delete()
     Room.query.delete()
     Class.query.delete()
+    ClassDay.query.delete()
     ClassStudent.query.delete()
     ClassTeacher.query.delete()
+    ClassDayStudent.query.delete()
+    ClassDayTeacher.query.delete()
     ShirtSize.query.delete()
     Room.query.delete()
+    SkillLevel.query.delete()
+
 
     db.session.commit()
     flash('DB Cleared')
@@ -79,6 +89,7 @@ def fill():
     db.session.add(InstrumentSize(id=1, name="Standard"))
     db.session.add(InstrumentSize(id=2, name="3/4"))
     db.session.add(InstrumentSize(id=3, name="1/2"))
+    assert InstrumentSize.query.get(1).name == 'Standard'
 
     db.session.add(InstrumentType(id=1, name='Fiddle'))
     db.session.add(InstrumentType(id=2, name='Guitar'))
@@ -86,42 +97,69 @@ def fill():
     db.session.add(InstrumentType(id=4, name='Banjo'))
     db.session.add(InstrumentType(id=5, name='Bass'))
     db.session.add(InstrumentType(id=6, name='Ukulele'))
+    assert InstrumentType.query.get(1).name == 'Fiddle'
     
     db.session.add(InstrumentCondition(id=InstrumentConditions.New.value, name='New'))
     db.session.add(InstrumentCondition(id=InstrumentConditions.Good.value, name='Good'))
     db.session.add(InstrumentCondition(id=InstrumentConditions.Fair.value, name='Fair'))
     db.session.add(InstrumentCondition(id=InstrumentConditions.Poor.value, name='Poor'))
     db.session.add(InstrumentCondition(id=InstrumentConditions.Broken.value, name='Broken'))
+    assert InstrumentCondition.query.get(1).name == 'Broken'
 
     db.session.add(InstrumentStatus(id=InstrumentStatuses.Available.value, name='Available for checkout'))
     db.session.add(InstrumentStatus(id=InstrumentStatuses.CheckedOut.value, name='Checked out to Student'))
     db.session.add(InstrumentStatus(id=InstrumentStatuses.NeedsRepair.value, name='Needs Repair'))
     db.session.add(InstrumentStatus(id=InstrumentStatuses.BeingRepaired.value, name='Out for Repair'))
     db.session.add(InstrumentStatus(id=InstrumentStatuses.Decommisioned.value, name='Decommissioned'))
+    assert InstrumentStatus.query.get(5).name == 'Decommissioned'
 
-    db.session.add(Instrument(type_id=InstrumentTypes.Fiddle.value, tag='F1', condition_id=InstrumentConditions.New.value, status_id=InstrumentStatuses.Available.value ))
-    db.session.add(Instrument(type_id=InstrumentTypes.Guitar.value, tag='G1', condition_id=InstrumentConditions.New.value, status_id=InstrumentStatuses.Available.value  ))
+    # F1 is a fiddle
+    # G1 is a guitar
+    # M1 is a mando
+    db.session.add(Instrument(id=1, type_id=InstrumentTypes.Fiddle.value, tag='F1', condition_id=InstrumentConditions.New.value, status_id=InstrumentStatuses.Available.value ))
+    db.session.add(Instrument(id=2, type_id=InstrumentTypes.Guitar.value, tag='G1', condition_id=InstrumentConditions.New.value, status_id=InstrumentStatuses.Available.value  ))
+    db.session.add(Instrument(id=3, type_id=InstrumentTypes.Mandolin.value, tag='M1', condition_id=InstrumentConditions.New.value, status_id=InstrumentStatuses.Available.value  ))
+    assert Instrument.query.get(1).tag=='F1'
+    assert Instrument.query.get(1).condition.name == 'New'
 
-    db.session.add(Student(external_id=-1, email='a@a.com',first_name='Alpha',last_name='A'))
-    db.session.add(Student(external_id=-2, email='b@b.com',first_name='Bravo',last_name='B'))
-    db.session.add(Student(external_id=-3, email='c@c.com',first_name='Charlie',last_name='C'))
+    db.session.add(Student(id=1, external_id=-1, email='a@a.com',first_name='Alpha',last_name='A'))
+    db.session.add(Student(id=2, external_id=-2, email='b@b.com',first_name='Bravo',last_name='B'))
+    db.session.add(Student(id=3, external_id=-3, email='c@c.com',first_name='Charlie',last_name='C'))
+    assert Student.query.get(3).first_name == 'Charlie'
 
-    db.session.add(StudentInstrument(student_id=1, instrument_id=1, checkout_date=datetime(2021,11,1)))
-    db.session.add(StudentInstrument(student_id=1, instrument_id=2, checkout_date=datetime(2021,11,1)))
-    db.session.add(StudentInstrument(student_id=2, instrument_id=1, checkout_date=datetime(2021,11,1)))
+    # Student Alpha(1) checked out fiddle F1 on 11/1
+    db.session.add(StudentInstrument(id=1, student_id=1, instrument_id=1, checkout_date=datetime(2021,11,1)))
+    assert StudentInstrument.query.get(1).student.first_name == 'Alpha'
+    assert StudentInstrument.query.get(1).instrument.tag  == 'F1'
+    assert StudentInstrument.query.get(1).instrument.type.name  == 'Fiddle'
+    # Student Bravo(2) checked out guitar g1 on 11/1
+    db.session.add(StudentInstrument(id=2, student_id=2, instrument_id=2, checkout_date=datetime(2021,11,1)))
+    # Student Charlie(3) checked out mando m1 on 11/1
+    db.session.add(StudentInstrument(id=3, student_id=3, instrument_id=3, checkout_date=datetime(2021,11,1)))
 
+
+    # ******** Semesters
     db.session.add(Semester(id=1, name='Winter 2021', first_checkout_date = datetime(2021,10,1), last_due_date = datetime(2022, 2,1)))
     db.session.add(Semester(id=2, name='Spring 2022', first_checkout_date = datetime(2022, 2,2), last_due_date = datetime(2022, 6,1)))
     db.session.add(Semester(id=3, name='Summer 2022', first_checkout_date = datetime(2022, 6,2), last_due_date = datetime(2022,10,2)))
+    semester_winter2021 = Semester.query.filter( 
+        (datetime(2021,11,1) > Semester.first_checkout_date) & 
+        (datetime(2021,11,1) < Semester.last_due_date)).first()
+    assert semester_winter2021.name == 'Winter 2021'
+
 
     # Campus
     db.session.add(Campus(id=1, name='LCMS'))
     db.session.add(Campus(id=2, name='Blackburn'))
     db.session.add(Campus(id=3, name='Long Branch'))
 
-    # Student Semesters
+    # Student are enrolled in semesters
+    # Alpha is enrolled in Winter2021(1) at LCMS(1)
     db.session.add(StudentSemester(id=1, student_id=1, semester_id=1, grade=6, campus_id=1 ))
-    db.session.add(StudentSemester(id=2, student_id=1, semester_id=3, grade=7, campus_id=2 ))
+    # Bravo is enrolled in Winter2021(1) at LCMS(1)
+    db.session.add(StudentSemester(id=2, student_id=2, semester_id=1, grade=7, campus_id=2 ))
+    # Charlie is enrolled in Winter2021(1) at Blackburn(2)
+    db.session.add(StudentSemester(id=3, student_id=3, semester_id=1, grade=7, campus_id=2 ))
 
     # Guadian Types
     db.session.add(GuardianType(id=1, dependent_name='child', guardian_name='parent'))
@@ -139,14 +177,23 @@ def fill():
     db.session.add(PersonRole(id=1,name='Guardian'))
     db.session.add(PersonRole(id=2,name='Teacher'))
     db.session.add(PersonRole(id=3,name='Staff'))
+    db.session.add(PersonRole(id=4,name='Assistant Teacher'))
     
     # PersonsRoles
-    db.session.add(PersonsRoles(id=1,person_id=1,role_id=1)) # Grandpa Adams is a guardian
-    db.session.add(PersonsRoles(id=2,person_id=3,role_id=2)) # Ms. Frizzle is a teacher
-    db.session.add(PersonsRoles(id=3,person_id=4,role_id=2)) # Bill Nye is a teacher
+    # Grandpa Adams(1) is a guardian(1)
+    db.session.add(PersonsRoles(id=1,person_id=1,role_id=1)) 
+    # Ms. Frizzle(3) is a teacher
+    db.session.add(PersonsRoles(id=2,person_id=3,role_id=2))
+     # Bill Nye(4) is a teacher
+    db.session.add(PersonsRoles(id=3,person_id=4,role_id=2))
 
     # Student Guardians
+    # Grandpa Adams is Alfa's grandfather
     db.session.add(StudentGuardian(id=1,student_id=1,guardian_id=1,guardian_type_id=2))
+    assert StudentGuardian.query.get(1).student.first_name == 'Alpha'
+    assert StudentGuardian.query.get(1).guardian_type.dependent_name == 'grandchild'
+    assert StudentGuardian.query.get(1).guardian.name == 'Grandpa Adams'
+    assert StudentGuardian.query.get(1).guardian_type.guardian_name == 'grandparent'
     db.session.add(StudentGuardian(id=2,student_id=1,guardian_id=2,guardian_type_id=2))
 
     db.session.add(ShirtSize(name="Decline", id=0))
@@ -161,27 +208,108 @@ def fill():
     db.session.add(ShirtSize(name="adult LG"))
     db.session.add(ShirtSize(name="adult XL"))
     db.session.add(ShirtSize(name="adult XXL"))
+
+    db.session.add(SkillLevel(id=1, level=100, name="Beginner"))
+    db.session.add(SkillLevel(id=2, level=200, name="Intermediate"))
+    db.session.add(SkillLevel(id=3, level=300, name="Advanced"))
  
-    db.session.add(Course(id=1, name='Beginning Fiddle',ideal_size=4, max_size=7))
-    db.session.add(Course(id=2, name='Advanced Banjo',ideal_size=5, max_size=7))
+    # Course 'Beginning Fiddle' requires beginning skills on a fiddle. 
+    db.session.add(Course(id=1, name='Beginning Fiddle', skill_level_id=1, instrument_id=InstrumentTypes.Fiddle.value, ideal_size=4, max_size=7))
+    assert Course.query.get(1).name == 'Beginning Fiddle'
+    assert Course.query.get(1).skill_level.name == "Beginner"
+    assert Course.query.get(1).instrument.type.name == "Fiddle"
+    db.session.add(Course(id=2, name='Advanced Banjo',   skill_level_id=3, instrument_id=InstrumentTypes.Banjo.value,  ideal_size=5, max_size=7))
+    db.session.add(Course(id=3, name='Intermediate Mandolin', skill_level_id=2, instrument_id=InstrumentTypes.Banjo.value,  ideal_size=5, max_size=7))
 
-    db.session.add(Room(id=1, name='Room 101', campus_id=1, student_capacity=20))
-    db.session.add(Room(id=2, name='Room 101', campus_id=2, student_capacity=30))
 
-    db.session.add(Class(id=1, semester_id=1, course_id=1, room_id=1, start_datetime = datetime(2021,10,1,16,30))) #Winter 2021, BegFid, RM101, LCMS, 10/1
-    db.session.add(Class(id=2, semester_id=1, course_id=1, room_id=1, start_datetime = datetime(2021,10,7,16,30))) #Winter 2021, BegFid, RM101, LCMS, 10/7
-    db.session.add(Class(id=3, semester_id=1, course_id=2, room_id=2, start_datetime = datetime(2021,10,1,16,30))) #Winter 2021, AdvBjo, RM101, Blackburn, 10/1
-    db.session.add(Class(id=4, semester_id=1, course_id=2, room_id=2, start_datetime = datetime(2021,10,1,16,30))) #Winter 2021, BegFid, RM101, Blackburn, 10/7
+    # LCMS and Blackburn both have a room 101
+    db.session.add(Room(id=1, name='Room 101', campus_id=1, capacity=20))
+    db.session.add(Room(id=2, name='Room 101', campus_id=2, capacity=30))
 
-    db.session.add(ClassTeacher(id=1, person_id=3, class_id=1, present=True))   # Frizzle teaches BegFid, 10/1
-    db.session.add(ClassTeacher(id=2, person_id=3, class_id=2))                 # Frizzle teaches BegFid, 10/7, present=unknown bc future
-    db.session.add(ClassTeacher(id=3, person_id=4, class_id=3, present=True))   # Bill teachs AdvBjo 10/1
-    db.session.add(ClassTeacher(id=4, person_id=4, class_id=4))                 # Bill teachs AdvBjo 10/7, present=unknown bc future
+    # ----- Schedule Classes
+    # schedule a class in winter2021, begfid, room101 at LCMS, Starting 10/1/2021 @ 4:30 every week for 3 months
+    db.session.add(Class(id=1, semester_id=1, course_id=1, room_id=1, start_datetime = datetime(2021,10,1,16,30), frequency_days=7, class_count=12)) #Winter 2021, BegFid, RM101, LCMS, 10/1
+    assert Class.query.get(1).semester.name == 'Winter 2021'
+    assert Class.query.get(1).course.name == 'Beginning Fiddle'
+    assert Class.query.get(1).course.classes[0].room.name == 'Room 101'
+    # Schedule a class in winter2021, advbjo, room101 at Blackburn, Starting 10/1/2021 @ 4:30 every week for 3 months
+    db.session.add(Class(id=2, semester_id=1, course_id=2, room_id=2, start_datetime = datetime(2021,10,1,16,30), frequency_days=7, class_count=12)) #Winter 2021, AdvBjo, RM101, Blackburn, 10/1
+    # Schedule a class in winter2021, itrmdo, room101 at Blackburn, Starting 10/2/2021 @ 4:30 every week for 3 months
+    db.session.add(Class(id=3, semester_id=1, course_id=3, room_id=2, start_datetime = datetime(2021,10,2,16,30), frequency_days=7, class_count=12)) #Winter 2021, AdvBjo, RM101, Blackburn, 10/1
 
-    db.session.add(ClassStudent(id=1, student_id=-1, class_id=1, present=True)) # Alpha attendeed BegFid 10/1 LCMS
-    db.session.add(ClassStudent(id=2, student_id=-1, class_id=2))               # Alpha scheduled to attend BegFid 10/7 at LCMS
-    db.session.add(ClassStudent(id=3, student_id=-2, class_id=1, present=True)) # Bravo attendeed BegFid 10/1 BB
-    db.session.add(ClassStudent(id=4, student_id=-2, class_id=4))               # Alpha scheduled to attend BegFid 10/7 BB
+
+    # # ------- Assign Teachers to a class
+    # # Assign MzFrz(3) to the begfig class(1)
+    # db.session.add(ClassTeacher(id=1, person_id=3, class_id=1))  # Frizzle teaches BegFid, 10/1
+    # assert ClassTeacher.query.get(1).teacher.name == 'Ms. Frizzle'
+    # assert ClassTeacher.query.get(1).class_.start_datetime == datetime(2021,10,1,16,30)
+    # assert ClassTeacher.query.get(1).class_.course.name == 'Beginning Fiddle'
+    # # Assign Bill(3) to the AdvBjo class(1)
+    # db.session.add(ClassTeacher(id=3, person_id=4, class_id=2))  # Bill teachs AdvBjo 10/1
+
+ 
+    # Students enrolled in the class
+    # Alpha enrolled in BegFid
+    db.session.add(ClassStudent(id=1, student_id=1, class_id=1)) # Alpha scheduled to attend BegFid 10/7 at LCMS
+    assert ClassStudent.query.get(1).student.first_name == 'Alpha'
+    assert ClassStudent.query.get(1).class_.start_datetime == datetime(2021,10,1,16,30)
+    assert ClassStudent.query.get(1).class_.course.name == 'Beginning Fiddle'
+    db.session.add(ClassStudent(id=2, student_id=-1, class_id=2)) # Bravo scheduled to attend BegFid 10/7 BB
+    db.session.add(ClassStudent(id=3, student_id=-2, class_id=3)) # Alpha scheduled to attend BegFid 10/7 at LCMS
+    db.session.add(ClassStudent(id=4, student_id=-2, class_id=4)) # Bravo scheduled to attend BegFid 10/7 BB
+
+ 
+    # Fill out the class days of classes.  This would be generated automatically, and links to student and teacher attendence
+    # Class BegFid(1),room101 at LCMS, First classday
+    db.session.add(ClassDay(id=1, class_id=1, room_id=1, start_datetime = datetime(2021,10,1,16,30))) # BegFiddle first day
+    assert ClassDay.query.get(1).class_.course.name == 'Beginning Fiddle'
+    assert ClassDay.query.get(1).room.name == 'Room 101'
+    assert ClassDay.query.get(1).room.campus.name == 'LCMS'
+    assert ClassDay.query.get(1).start_datetime == datetime(2021,10,1,16,30)
+    db.session.add(ClassDay(id=2, class_id=1, room_id=1, start_datetime = datetime(2021,10,7,16,30))) # BegFiddle second day
+    db.session.add(ClassDay(id=3, class_id=2, room_id=2, start_datetime = datetime(2021,10,1,16,30))) # AdvBjo first day
+    db.session.add(ClassDay(id=4, class_id=2, room_id=2, start_datetime = datetime(2021,10,7,16,30))) # AdvBjo second day
+
+    #Teacher class assignments
+    #Frizzle is teacher, Bill is asst for begfid 10/1
+    db.session.add(ClassTeacher(id=1, class_id=1, person_id=3, role_id=2 ))
+    db.session.add(ClassTeacher(id=2, class_id=1, person_id=4, role_id=4 ))
+    assert ClassTeacher.query.get(1).class_.course.name == 'Beginning Fiddle'
+    assert ClassTeacher.query.get(1).teacher.name == 'Ms. Frizzle'
+    assert ClassTeacher.query.get(1).role.name == 'Teacher'
+    assert ClassTeacher.query.get(2).teacher.name == 'Bill Nye'
+    assert ClassTeacher.query.get(2).role.name == 'Assistant Teacher'
+    assert len(Class.query.get(1).teachers) == 2
+    assert Class.query.get(1).teachers[0].teacher.name == 'Ms. Frizzle'
+    assert Class.query.get(1).teachers[1].teacher.name == 'Bill Nye'
+
+    # Class Day Teacher
+    # Ms frizzle is present on first day of begfid
+    db.session.add(ClassDayTeacher(id=1, class_day_id=1, teacher_id=3, role_id=2, present=True))
+    assert ClassDayTeacher.query.get(1).class_day.class_.course.name == 'Beginning Fiddle'
+    assert ClassDayTeacher.query.get(1).class_day.room.name == 'Room 101'
+    assert ClassDayTeacher.query.get(1).class_day.room.campus.name == 'LCMS'
+    assert ClassDayTeacher.query.get(1).teacher.name == 'Ms. Frizzle'
+    assert ClassDayTeacher.query.get(1).role.name == 'Teacher'
+    assert ClassDayTeacher.query.get(1).present
+    assert len(ClassDayTeacher.query.get(1).class_day.class_.class_days) > 0
+    db.session.add(ClassDayTeacher(id=2, class_day_id=2, teacher_id=3, role_id=2, present=True))
+    db.session.add(ClassDayTeacher(id=3, class_day_id=3, teacher_id=4, role_id=4, present=True))
+    db.session.add(ClassDayTeacher(id=4, class_day_id=4, teacher_id=4, role_id=4, present=True)) # BegFiddl
+
+    # Class Day Student
+    # Alpha is present on the first day of begfid class
+    db.session.add(ClassDayStudent(id=1, class_day_id=1, student_id=1, present=True)) # Alpha attends BegFid 10/1
+    assert ClassDayStudent.query.get(1).class_day.class_.course.name == 'Beginning Fiddle'
+    assert ClassDayStudent.query.get(1).class_day.room.name == 'Room 101'
+    assert ClassDayStudent.query.get(1).class_day.room.campus.name == 'LCMS'
+    assert ClassDayStudent.query.get(1).class_day.teachers[0].teacher.name == 'Ms. Frizzle'
+    assert ClassDayStudent.query.get(1).class_day.class_.teachers[0].teacher.name == 'Ms. Frizzle'
+    assert ClassDayStudent.query.get(1).present
+    # assert len(ClassDayStudent.query.get(1).class_day.teachers) == 2
+    db.session.add(ClassDayStudent(id=2, class_day_id=2, student_id=1, present=True))
+    db.session.add(ClassDayStudent(id=3, class_day_id=3, student_id=2, present=True))
+    db.session.add(ClassDayStudent(id=4, class_day_id=4, student_id=2, present=True))
 
     db.session.commit()
 
@@ -203,10 +331,10 @@ def fill():
 
     # StudentSemester:student
     assert student_alpha.semesters[0].semester.name == 'Winter 2021'
-    assert semester_winter_2021.students[0].student.first_name == 'Alpha'
+    assert semester_winter_2021.student_semesters[0].student.first_name == 'Alpha'
 
     # StudentSemester:Campus
-    assert semester_winter_2021.students[0].campus_id == 1
+    assert semester_winter_2021.student_semesters[0].campus_id == 1
     assert student_alpha.semesters[0].campus.name == 'LCMS'
 
     # Guardian Type
@@ -249,36 +377,64 @@ def fill():
     assert course_begfid.ideal_size == 4
 
     #Class
-    class_wtrbegfid = Class.query.get(1)
+    class_wtrbegfid = Class.query.filter((Class.course == course_begfid) & (Class.semester == semester_winter_2021 )).first()
     assert class_wtrbegfid.semester.name == 'Winter 2021'
     assert class_wtrbegfid.course.name == 'Beginning Fiddle'
     assert class_wtrbegfid.room.name == 'Room 101'
-    assert class_wtrbegfid.room.student_capacity == 20
+    assert class_wtrbegfid.room.capacity == 20
     assert class_wtrbegfid.room.campus.name == 'LCMS'
-    assert len(class_wtrbegfid.students) == 2
+    assert len(class_wtrbegfid.students) == 1
     # assert class_wtrbegfid.students[0].student.first_name == 'Alpha'
-    # assert class_wtrbegfid.teachers[0].teacher.name == 'Mz. Frizzle' 
+    assert class_wtrbegfid.teachers[0].teacher.name == 'Ms. Frizzle' 
 
-    #Class Teacher
-    class_teacher_wtrbegfid = ClassTeacher.query.get(1)
-    assert class_teacher_wtrbegfid.class_.start_datetime ==  datetime(2021,10,1,16,30)
-    assert class_teacher_wtrbegfid.class_.course.name == 'Beginning Fiddle'
-    assert class_teacher_wtrbegfid.teacher.name == 'Ms. Frizzle' 
-    assert class_teacher_wtrbegfid.present == True
+    # Teacher Assigned to class
+    class_teacher = class_wtrbegfid.teachers[0].teacher
+    assert class_teacher.name == 'Ms. Frizzle'
+    assert class_teacher.roles[0].role.name == 'Teacher'
+    assert len(class_teacher.classes_enrolled) == 1
+    assert class_teacher.classes_enrolled[0].class_.course.name == 'Beginning Fiddle'
+    assert class_teacher.classes_enrolled[0].class_.start_datetime == datetime(2021,10,1,16,30)
 
-    #Class Student
-    class_student_alpha_wtrbegfid = ClassStudent.query.get(1)
-    assert class_student_alpha_wtrbegfid.class_.start_datetime ==  datetime(2021,10,1,16,30)
-    assert class_student_alpha_wtrbegfid.class_.course.name == 'Beginning Fiddle'
-    assert class_student_alpha_wtrbegfid.class_.teachers[0].teacher.name == 'Ms. Frizzle'
+    #Student enrolled in class
+    class_student = ClassStudent.query.get(1)
+    assert class_student.class_.start_datetime ==  datetime(2021,10,1,16,30)
+    assert class_student.class_.course.name == 'Beginning Fiddle'
+    assert class_student.class_.teachers[0].teacher.name == 'Ms. Frizzle'
+
+        # (ClassDay.room.name == 'Room 101') &
+
+    #ClassDay
+    class_day_wtrbegfid = ClassDay.query.filter(
+        (ClassDay.class_ == class_wtrbegfid) &
+        (ClassDay.start_datetime == datetime(2021,10,1,16,30))).first()
+    assert class_day_wtrbegfid
+    assert len(class_day_wtrbegfid.students) == 1
+    assert class_day_wtrbegfid.students[0].student.first_name == 'Alpha' #Alpha is enrolled
+    assert len(class_day_wtrbegfid.teachers) == 1
+    assert class_day_wtrbegfid.teachers[0].teacher.name == 'Ms. Frizzle' # Frizzle is assigned as teacher
+
+
+    #Class Day Teacher
+    class_day_teacher = ClassDayTeacher.query.filter(
+        (ClassDayTeacher.class_day == class_day_wtrbegfid) &
+        (ClassDayTeacher.teacher_id == 3)).first()
+    assert class_day_teacher.class_day.start_datetime ==  datetime(2021,10,1,16,30)
+    assert class_day_teacher.class_day.class_.course.name == 'Beginning Fiddle'
+    assert class_day_teacher.teacher.name == 'Ms. Frizzle' 
+    assert class_day_teacher.present == True
+
+    #Class Day Student
+    class_day_student = ClassDayStudent.query.filter(
+        (ClassDayStudent.class_day == class_day_wtrbegfid) &
+        (ClassDayStudent.student_id == 1)).first()
+    assert class_day_student.class_day.start_datetime ==  datetime(2021,10,1,16,30)
+    assert class_day_student.class_day.class_.course.name == 'Beginning Fiddle'
+    assert class_day_student.student.first_name == 'Alpha' 
+    assert class_day_student.present == True
 
     flash('DB model tests pass')
 
     return redirect(url_for('views.home'))
-
-# db.session.add(Role(id=1, name='dev'))
-# db.session.add(UserRoles( user_id=1, role_id=1))
-
 
 @views.route('/', methods=['GET', 'POST'])
 @login_required
@@ -697,6 +853,83 @@ def checkout_delete():
     return jsonify({})
 
 
+
+#Assign Classes
+@views.route('/classes/assign', methods=['GET','POST'])
+@login_required
+def assign_classes():
+
+    if request.method == 'GET':
+        students = Student.query.all()
+        instrument_types = InstrumentType.query.all()
+        campuses = Campus.query.all()
+        semesters = Semester.query.all()
+        classes = Class.query.all()
+
+        print('Hello world!', file=sys.stderr)
+
+        # semester = semesters[0]
+        # student_class_id = semester.student_semesters[0].student.classes_enrolled
+
+        # assert 1==0
+
+        return render_template(
+            "assign_classes.html", 
+            students = students,
+            instrument_types = instrument_types, 
+            campuses = campuses, 
+            semesters = semesters,
+            classes = classes,
+            user=current_user) 
+
+    # if request.method == 'POST':
+
+    #     for student_class_selector in request.form if student_class_selector.class == 'student-class-selector':
+
+    #         class_student = ClassStudent(
+    #             class_id = student_class_selector.value,
+    #             student_id= student_class_selector['data-student_id']
+    #         )
+
+
+    #     checkout = checkout_from_request(checkout, request)
+    #     db.session.add(checkout)
+    #     try:
+    #         db.session.commit()
+    #     except sqlalchemy.exc.IntegrityError:
+    #         flash(f' {checkout.instrument.type.name} {checkout.instrument.tag} is already checked out to {checkout.student.first_name} {checkout.student.last_name}', category='danger')
+    #         return redirect(url_for('views.checkout_edit'))
+
+    #     # Update the instrument record to reflect the checkout status
+    #     instrument = Instrument.query.get(checkout.instrument_id)
+    #     if checkout.checkout_date is not None and checkout.return_date is None:
+    #         instrument.status_id = InstrumentStatuses.CheckedOut.value
+    #     elif checkout.return_date is not None:
+    #         instrument.status_id = InstrumentStatuses.Available.value
+    #     db.session.add(instrument)
+    # instrument = Instrument.query.get_or_404(1)
+    #     instrument.tag = request.form.get('instrument_tag')
+    #     instrument.type_id = request.form.get('instrument_type')
+    #     instrument.size_id = request.form.get('instrument_size')
+    #     instrument.status_id = request.form.get('instrument_status')
+    #     instrument.serial = request.form.get('instrument_serial')
+    #     instrument.brand = request.form.get('instrument_brand')
+    #     instrument.model = request.form.get('instrument_brand')
+    #     instrument.condition_id = request.form.get('instrument_condition')
+    #     instrument.location = request.form.get('instrument_location')
+    #     instrument.est_value = request.form.get('instrument_value')
+    #     db.session.add(instrument)
+    #     db.session.commit()
+    #     flash('Instrument Added!', category='success')
+    #     return redirect(url_for('views.instrument_list'))
+    # instrument_types = InstrumentType.query.all()
+    # instrument_conditions = InstrumentCondition.query.all()
+    # instrument_sizes = InstrumentSize.query.all()
+    # instrument_statuses = InstrumentStatus.query.all()
+
+
+
+
 @views.route('/students/import', methods=['GET','POST'])
 @login_required
 def student_import():
@@ -765,10 +998,10 @@ def student_import():
 
         instrument_1 = InstrumentType.query.filter(InstrumentType.name == imported['Instrument']).first()
         if instrument_1:
-            student_semester.first_choice_instrument_type_id = instrument_1.id
+            student_semester.instrument_type_1_id = instrument_1.id
         instrument_2 = InstrumentType.query.filter(InstrumentType.name == imported['Second instrument']).first()
         if instrument_2:
-            student_semester.second_choice_instrument_type_id = instrument_2.id
+            student_semester.instrument_type_1_id = instrument_2.id
         
         student_semester.shirt_size = imported['Shirt Size']
         student_semester.behavior_agreement = imported['Behavior Agreement'].lower() in truthy

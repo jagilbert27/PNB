@@ -1,0 +1,544 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="Sqlite" id="Project-87d" database="Sqlite" >
+	<schema name="Default" >
+		<table name="campuses" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="name" type="varchar" length="150" jt="12" />
+			<column name="address" type="varchar" length="150" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="class_day_students" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="class_day_id" type="integer" jt="4" />
+			<column name="student_id" type="integer" jt="4" />
+			<column name="present" type="boolean" jt="-7" />
+			<column name="notes" type="varchar" length="150" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="FK_class_day_students class_days" to_schema="Default" to_table="class_days" >
+				<fk_column name="class_day_id" pk="id" />
+			</fk>
+			<fk name="FK_class_day_students students" to_schema="Default" to_table="students" >
+				<fk_column name="student_id" pk="id" />
+			</fk>
+		</table>
+		<table name="class_day_teachers" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="class_day_id" type="integer" jt="4" />
+			<column name="teacher_id" type="integer" jt="4" />
+			<column name="present" type="boolean" jt="-7" />
+			<column name="notes" type="varchar" length="150" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="FK_class_day_teachers class_days" to_schema="Default" to_table="class_days" >
+				<fk_column name="class_day_id" pk="id" />
+			</fk>
+			<fk name="FK_class_day_teachers persons" to_schema="Default" to_table="persons" >
+				<fk_column name="teacher_id" pk="id" />
+			</fk>
+		</table>
+		<table name="class_days" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="name" type="varchar" length="150" jt="12" />
+			<column name="class_id" type="integer" jt="4" />
+			<column name="room_id" type="integer" jt="4" />
+			<column name="start_datetime" type="datetime" jt="93" />
+			<column name="notes" type="varchar" length="1000" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="FK_class_days classes" to_schema="Default" to_table="classes" >
+				<fk_column name="class_id" pk="id" />
+			</fk>
+			<fk name="FK_class_days rooms" to_schema="Default" to_table="rooms" >
+				<fk_column name="room_id" pk="id" />
+			</fk>
+		</table>
+		<table name="classes" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="name" type="varchar" length="150" jt="12" />
+			<column name="semester_id" type="integer" jt="4" />
+			<column name="course_id" type="integer" jt="4" />
+			<column name="room_id" type="integer" jt="4" />
+			<column name="start_datetime" type="datetime" jt="93" />
+			<column name="frequency_days" type="integer" jt="4" />
+			<column name="class_count" type="integer" jt="4" />
+			<column name="notes" type="varchar" length="1000" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="FK_classes semesters" to_schema="Default" to_table="semesters" >
+				<fk_column name="semester_id" pk="id" />
+			</fk>
+			<fk name="FK_classes courses" to_schema="Default" to_table="courses" >
+				<fk_column name="course_id" pk="id" />
+			</fk>
+			<fk name="FK_classes rooms" to_schema="Default" to_table="rooms" >
+				<fk_column name="room_id" pk="id" />
+			</fk>
+		</table>
+		<table name="classes_students" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="class_id" type="integer" jt="4" />
+			<column name="student_id" type="integer" jt="4" />
+			<column name="notes" type="varchar" length="150" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="FK_classes_students classes" to_schema="Default" to_table="classes" >
+				<fk_column name="class_id" pk="id" />
+			</fk>
+			<fk name="FK_classes_students students" to_schema="Default" to_table="students" >
+				<fk_column name="student_id" pk="id" />
+			</fk>
+		</table>
+		<table name="classes_teachers" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="class_id" type="integer" jt="4" />
+			<column name="person_id" type="integer" jt="4" />
+			<column name="notes" type="varchar" length="150" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="FK_classes_teachers classes" to_schema="Default" to_table="classes" >
+				<fk_column name="class_id" pk="id" />
+			</fk>
+			<fk name="FK_classes_teachers persons" to_schema="Default" to_table="persons" >
+				<fk_column name="person_id" pk="id" />
+			</fk>
+		</table>
+		<table name="courses" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="name" type="varchar" length="150" jt="12" />
+			<column name="instrument_id" type="integer" jt="4" />
+			<column name="skill_level_id" type="integer" jt="4" />
+			<column name="ideal_size" type="integer" jt="4" />
+			<column name="max_size" type="integer" jt="4" />
+			<column name="notes" type="varchar" length="1000" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="FK_courses instruments" to_schema="Default" to_table="instruments" >
+				<fk_column name="instrument_id" pk="id" />
+			</fk>
+			<fk name="FK_courses skill_levels" to_schema="Default" to_table="skill_levels" >
+				<fk_column name="skill_level_id" pk="id" />
+			</fk>
+		</table>
+		<table name="guardian_types" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="dependent_name" type="varchar" length="150" jt="12" />
+			<column name="guardian_name" type="varchar" length="150" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="instrument_conditions" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="name" type="varchar" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="instrument_sizes" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="name" type="varchar" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="instrument_statuses" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="name" type="varchar" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="instrument_types" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="name" type="varchar" length="20" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="instruments" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="external_id" type="integer" jt="4" />
+			<column name="type_id" type="integer" jt="4" />
+			<column name="size_id" type="integer" jt="4" />
+			<column name="status_id" type="integer" jt="4" />
+			<column name="condition_id" type="integer" jt="4" />
+			<column name="tag" type="varchar" length="150" jt="12" />
+			<column name="serial" type="varchar" length="150" jt="12" />
+			<column name="brand" type="varchar" length="150" jt="12" />
+			<column name="model" type="varchar" length="150" jt="12" />
+			<column name="location" type="varchar" length="150" jt="12" />
+			<column name="est_value" type="integer" jt="4" />
+			<column name="notes" type="varchar" length="1000" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="FK_instruments instrument_types" to_schema="Default" to_table="instrument_types" >
+				<fk_column name="type_id" pk="id" />
+			</fk>
+			<fk name="FK_instruments instrument_sizes" to_schema="Default" to_table="instrument_sizes" >
+				<fk_column name="size_id" pk="id" />
+			</fk>
+			<fk name="FK_instruments instrument_statuses" to_schema="Default" to_table="instrument_statuses" >
+				<fk_column name="status_id" pk="id" />
+			</fk>
+			<fk name="FK_instruments instrument_conditions" to_schema="Default" to_table="instrument_conditions" >
+				<fk_column name="condition_id" pk="id" />
+			</fk>
+		</table>
+		<table name="note" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="data" type="varchar" length="10000" jt="12" />
+			<column name="date" type="datetime" jt="93" />
+			<column name="user_id" type="integer" jt="4" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="FK_note user" to_schema="Default" to_table="user" >
+				<fk_column name="user_id" pk="id" />
+			</fk>
+		</table>
+		<table name="person_role" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="name" type="varchar" length="150" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="persons" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="name" type="varchar" length="150" jt="12" />
+			<column name="notes" type="varchar" length="1000" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="persons_roles" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="person_id" type="integer" jt="4" />
+			<column name="role_id" type="integer" jt="4" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="FK_persons_roles persons" to_schema="Default" to_table="persons" >
+				<fk_column name="person_id" pk="id" />
+			</fk>
+			<fk name="FK_persons_roles person_role" to_schema="Default" to_table="person_role" >
+				<fk_column name="role_id" pk="id" />
+			</fk>
+		</table>
+		<table name="rooms" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="name" type="varchar" length="150" jt="12" />
+			<column name="campus_id" type="integer" jt="4" />
+			<column name="capacity" type="integer" jt="4" />
+			<column name="notes" type="varchar" length="1000" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="FK_rooms campuses" to_schema="Default" to_table="campuses" >
+				<fk_column name="campus_id" pk="id" />
+			</fk>
+		</table>
+		<table name="semesters" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="name" type="varchar" jt="12" />
+			<column name="start_date" type="date" jt="91" />
+			<column name="end_date" type="date" jt="91" />
+			<column name="first_class_date" type="date" jt="91" />
+			<column name="last_class_date" type="date" jt="91" />
+			<column name="first_checkout_date" type="date" jt="91" />
+			<column name="last_due_date" type="date" jt="91" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="shirt_sizes" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="name" type="varchar" length="150" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="skill_levels" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="level" type="integer" jt="4" />
+			<column name="name" type="varchar" length="150" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="student_semester" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="external_id" type="integer" jt="4" />
+			<column name="student_id" type="integer" jt="4" />
+			<column name="semester_id" type="integer" jt="4" />
+			<column name="campus_id" type="integer" jt="4" />
+			<column name="instrument_type_1_id" type="integer" jt="4" />
+			<column name="instrument_type_2_id" type="integer" jt="4" />
+			<column name="signup_date" type="date" jt="91" />
+			<column name="grade" type="integer" jt="4" />
+			<column name="shirt_size" type="varchar" length="150" jt="12" />
+			<column name="behavior_agreement" type="boolean" jt="-7" />
+			<column name="photo_permission" type="boolean" jt="-7" />
+			<column name="hardship_requested" type="boolean" jt="-7" />
+			<column name="home_schooled" type="boolean" jt="-7" />
+			<column name="tuition_charged" type="numeric" length="8" decimal="2" jt="2" />
+			<column name="rental_charged" type="numeric" length="8" decimal="2" jt="2" />
+			<column name="total_paid" type="numeric" length="8" decimal="2" jt="2" />
+			<column name="paid_date" type="date" jt="91" />
+			<column name="notes" type="varchar" length="1000" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="FK_student_semester students" to_schema="Default" to_table="students" >
+				<fk_column name="student_id" pk="id" />
+			</fk>
+			<fk name="FK_student_semester semesters" to_schema="Default" to_table="semesters" >
+				<fk_column name="semester_id" pk="id" />
+			</fk>
+			<fk name="FK_student_semester campuses" to_schema="Default" to_table="campuses" >
+				<fk_column name="campus_id" pk="id" />
+			</fk>
+			<fk name="FK_student_semester instrument_types" to_schema="Default" to_table="instrument_types" >
+				<fk_column name="instrument_type_1_id" pk="id" />
+			</fk>
+			<fk name="FK_student_semester instrument_types_001" to_schema="Default" to_table="instrument_types" >
+				<fk_column name="instrument_type_2_id" pk="id" />
+			</fk>
+		</table>
+		<table name="students" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="external_id" type="integer" jt="4" />
+			<column name="email" type="varchar" length="150" jt="12" />
+			<column name="first_name" type="varchar" length="150" jt="12" />
+			<column name="last_name" type="varchar" length="150" jt="12" />
+			<column name="birthday" type="date" jt="91" />
+			<column name="address" type="varchar" length="150" jt="12" />
+			<column name="phone" type="varchar" length="20" jt="12" />
+			<column name="notes" type="varchar" length="150" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+		<table name="students_guardians" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="student_id" type="integer" jt="4" />
+			<column name="guardian_id" type="integer" jt="4" />
+			<column name="guardian_type_id" type="integer" jt="4" />
+			<column name="notes" type="varchar" length="1000" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<index name="_unique_student_guardian" unique="UNIQUE_KEY" >
+				<column name="student_id" />
+				<column name="guardian_id" />
+			</index>
+			<fk name="FK_students_guardians students" to_schema="Default" to_table="students" >
+				<fk_column name="student_id" pk="id" />
+			</fk>
+			<fk name="FK_students_guardians persons" to_schema="Default" to_table="persons" >
+				<fk_column name="guardian_id" pk="id" />
+			</fk>
+			<fk name="FK_students_guardians guardian_types" to_schema="Default" to_table="guardian_types" >
+				<fk_column name="guardian_type_id" pk="id" />
+			</fk>
+		</table>
+		<table name="students_instruments" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="external_id" type="integer" jt="4" />
+			<column name="student_id" type="integer" jt="4" />
+			<column name="instrument_id" type="integer" jt="4" />
+			<column name="checkout_condition_id" type="integer" jt="4" />
+			<column name="return_condition_id" type="integer" jt="4" />
+			<column name="checkout_date" type="date" jt="91" />
+			<column name="due_date" type="date" jt="91" />
+			<column name="return_date" type="date" jt="91" />
+			<column name="return_location" type="varchar" length="100" jt="12" />
+			<column name="notes" type="varchar" length="1000" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<index name="_unique_student_instrument_checkoutdate" unique="UNIQUE_KEY" >
+				<column name="student_id" />
+				<column name="instrument_id" />
+				<column name="checkout_date" />
+			</index>
+			<fk name="FK_students_instruments students" to_schema="Default" to_table="students" >
+				<fk_column name="student_id" pk="id" />
+			</fk>
+			<fk name="FK_students_instruments instruments" to_schema="Default" to_table="instruments" >
+				<fk_column name="instrument_id" pk="id" />
+			</fk>
+			<fk name="FK_students_instruments instrument_conditions" to_schema="Default" to_table="instrument_conditions" >
+				<fk_column name="checkout_condition_id" pk="id" />
+			</fk>
+			<fk name="FK_students_instruments instrument_conditions_001" to_schema="Default" to_table="instrument_conditions" >
+				<fk_column name="return_condition_id" pk="id" />
+			</fk>
+		</table>
+		<table name="user" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="email" type="varchar" length="150" jt="12" />
+			<column name="password" type="varchar" length="150" jt="12" />
+			<column name="first_name" type="varchar" length="150" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+		</table>
+	</schema>
+	<connector name="Sqlite" database="Sqlite" driver_class="org.sqlite.JDBC" driver_jar="sqlite-jdbc-3.36.0.3.jar" driver_desc="Standard" host="localhost" port="7210" instance="C:/Personal Repo/PNB/website/PnbAdmin.db" />
+	<layout name="Main Layout" id="Layout-195" show_relation="columns" >
+		<entity schema="Default" name="class_day_students" color="D1BEF4" x="592" y="208" />
+		<entity schema="Default" name="class_day_teachers" color="F4DDBE" x="592" y="352" />
+		<entity schema="Default" name="class_days" color="D1BEF4" x="832" y="272" />
+		<entity schema="Default" name="classes" color="F4DDBE" x="1040" y="256" />
+		<entity schema="Default" name="classes_students" color="F4DDBE" x="592" y="80" />
+		<entity schema="Default" name="classes_teachers" color="F4DDBE" x="608" y="496" />
+		<entity schema="Default" name="courses" color="BEBEF4" x="1280" y="256" />
+		<entity schema="Default" name="persons" color="F4DDBE" x="384" y="432" />
+		<entity schema="Default" name="semesters" color="BEBEF4" x="1280" y="448" />
+		<entity schema="Default" name="student_semester" color="BEBEF4" x="48" y="288" />
+		<entity schema="Default" name="students" color="BED3F4" x="384" y="112" />
+		<group name="students" color="ECF0F7" >
+			<entity schema="Default" name="students" />
+		</group>
+	</layout>
+	<layout name="~Layout with Sample Tools" id="Layout-144d" show_column_type="y" show_relation="columns" >
+		<entity schema="Default" name="campuses" color="D1BEF4" x="2560" y="48" />
+		<entity schema="Default" name="class_day_students" color="D1BEF4" x="2320" y="288" />
+		<entity schema="Default" name="class_day_teachers" color="F4DDBE" x="1584" y="240" />
+		<entity schema="Default" name="class_days" color="D1BEF4" x="2064" y="48" />
+		<entity schema="Default" name="classes" color="F4DDBE" x="1088" y="48" />
+		<entity schema="Default" name="classes_students" color="F4DDBE" x="1088" y="336" />
+		<entity schema="Default" name="classes_teachers" color="F4DDBE" x="1344" y="336" />
+		<entity schema="Default" name="courses" color="BEBEF4" x="272" y="400" />
+		<entity schema="Default" name="guardian_types" color="BED3F4" x="1360" y="1216" />
+		<entity schema="Default" name="instrument_conditions" color="BED3F4" x="1648" y="896" />
+		<entity schema="Default" name="instrument_sizes" color="BEBEF4" x="64" y="400" />
+		<entity schema="Default" name="instrument_statuses" color="BEBEF4" x="48" y="224" />
+		<entity schema="Default" name="instrument_types" color="BEBEF4" x="800" y="48" />
+		<entity schema="Default" name="instruments" color="BEBEF4" x="272" y="48" />
+		<entity schema="Default" name="note" color="C7F4BE" x="2064" y="592" />
+		<entity schema="Default" name="person_role" color="F4DDBE" x="1808" y="48" />
+		<entity schema="Default" name="persons" color="F4DDBE" x="1344" y="48" />
+		<entity schema="Default" name="persons_roles" color="F4DDBE" x="1584" y="48" />
+		<entity schema="Default" name="rooms" color="D1BEF4" x="2320" y="48" />
+		<entity schema="Default" name="semesters" color="BEBEF4" x="800" y="224" />
+		<entity schema="Default" name="shirt_sizes" color="3986C1" x="1088" y="592" />
+		<entity schema="Default" name="skill_levels" color="BEBEF4" x="512" y="656" />
+		<entity schema="Default" name="student_semester" color="BEBEF4" x="512" y="48" />
+		<entity schema="Default" name="students" color="BED3F4" x="1104" y="896" />
+		<entity schema="Default" name="students_guardians" color="BED3F4" x="1088" y="1184" />
+		<entity schema="Default" name="students_instruments" color="BED3F4" x="1360" y="896" />
+		<entity schema="Default" name="user" color="C7F4BE" x="2304" y="592" />
+		<script name="SQL Editor" id="Editor-222c" language="SQL" >
+			<string><![CDATA[SELECT id, name, semester_id, course_id, room_id, start_datetime, frequency_days, class_count, notes
+FROM
+	classes s;]]></string>
+		</script>
+		<browser id="Browse-869" name="Relational Data Explorer" confirm_updates="y" >
+			<browse_table schema="Default" entity="classes" x="20" y="20" width="400" height="300" >
+				<browse_table schema="Default" entity="class_days" fk="FK_class_days classes" x="440" y="20" width="500" height="350" >
+					<browse_table schema="Default" entity="class_day_students" fk="FK_class_day_students class_days" x="960" y="20" width="500" height="350" />
+				</browse_table>
+			</browse_table>
+		</browser>
+		<query id="Query-46a" name="Query Builder" >
+			<query_table schema="Default" name="classes" alias="c" x="48" y="48" >
+				<column name="id" />
+				<column name="name" />
+				<column name="semester_id" />
+				<column name="course_id" />
+				<column name="room_id" />
+				<column name="start_datetime" />
+				<column name="frequency_days" />
+				<column name="class_count" />
+				<column name="notes" />
+				<query_table schema="Default" name="class_days" alias="cd" x="240" y="48" fk="FK_class_days classes" type="Inner Join" >
+					<column name="id" />
+					<column name="name" />
+					<column name="class_id" />
+					<column name="room_id" />
+					<column name="start_datetime" />
+					<column name="notes" />
+					<query_table schema="Default" name="class_day_students" alias="cds" x="416" y="48" fk="FK_class_day_students class_days" type="Inner Join" >
+						<column name="id" />
+						<column name="class_day_id" />
+						<column name="student_id" />
+						<column name="present" />
+						<column name="notes" />
+					</query_table>
+				</query_table>
+			</query_table>
+		</query>
+		<form name="Analytic Application" id="Report-9f6" template="Page" css="container-fluid" view="frame" >
+			<var name="samplePageNumber" type="4" value="0" mandatory="n" />
+			<var name="sampleRecordsPerPage" type="4" value="100" mandatory="n" />
+			<body name="Body" template="Grid" pos="0,0,0,0,f,f" layout="{{-2,-2,-2,-2,-1},{-2,-2,-2,-2}}" scroll="n" html="n" >
+				<cell type="label" name="Classes Data" template="H3" pos="0,0,1,0,l,c" />
+				<cell type="chart" name="Line" template="Line" pos="0,1,4,1,l,c" >
+					<form_script type="DataSource" language="SQL" >
+						<var name="id" type="4" />
+						<var name="name" />
+						<var name="semester_id" type="4" />
+						<var name="course_id" type="4" />
+						<var name="room_id" type="4" />
+						<var name="start_datetime" type="93" />
+						<var name="frequency_days" type="4" />
+						<var name="class_count" type="4" />
+						<var name="notes" />
+						<script ><![CDATA[SELECT * FROM classes]]></script>
+					</form_script>
+				</cell>
+				<tableview name="sample" template="Table" pos="0,2,4,2,f,f" layout="{{-2,-2,-2,-2,-2,-2,-2},{-2,-2}}" scroll="n" html="n" header_rows="1" >
+					<form_script type="DataSource" language="SQL" >
+						<var name="id" type="4" />
+						<var name="name" />
+						<var name="semester_id" type="4" />
+						<var name="course_id" type="4" />
+						<var name="room_id" type="4" />
+						<var name="start_datetime" type="93" />
+						<var name="frequency_days" type="4" />
+						<var name="class_count" type="4" />
+						<var name="notes" />
+						<script ><![CDATA[SELECT * FROM classes]]></script>
+					</form_script>
+					<cell type="label" name="id" pos="0,0,0,0,c,c" />
+					<cell type="label" name="name" pos="1,0,1,0,c,c" />
+					<cell type="label" name="semester_id" pos="2,0,2,0,c,c" />
+					<cell type="label" name="course_id" pos="3,0,3,0,c,c" />
+					<cell type="label" name="room_id" pos="4,0,4,0,c,c" />
+					<cell type="label" name="start_datetime" pos="5,0,5,0,c,c" />
+					<cell type="label" name="Button can open other pages." pos="6,0,6,0,c,c" />
+					<cell type="label" name="${id}" template="Plain" pos="0,1,0,1,l,c" />
+					<cell type="label" name="${name}" template="Plain" pos="1,1,1,1,l,c" />
+					<cell type="label" name="${semester_id}" template="Plain" pos="2,1,2,1,l,c" />
+					<cell type="label" name="${course_id}" template="Plain" pos="3,1,3,1,l,c" />
+					<cell type="label" name="${room_id}" template="Plain" pos="4,1,4,1,l,c" />
+					<cell type="label" name="${start_datetime}" template="Plain" pos="5,1,5,1,l,c" />
+					<cell type="button" name="More" template="Plain" pos="6,1,6,1,c,c" ref_id="Report-9f6" />
+				</tableview>
+				<cell type="href" name="" disabled="${samplePageNumber&lt;1}" pos="0,3,0,3,l,c" glyph="FA-ANGLE_DOUBLE_LEFT" ref_id="Report-9f6" >
+					<var name="samplePageNumber" value="0" />
+				</cell>
+				<cell type="href" name="" disabled="${samplePageNumber&lt;1}" pos="1,3,1,3,l,c" glyph="FA-ANGLE_LEFT" ref_id="Report-9f6" >
+					<var name="samplePageNumber" value="${Math.max(0,samplePageNumber-1)}" />
+				</cell>
+				<cell type="label" name="Page ${samplePageNumber+1}" pos="2,3,2,3,l,c" />
+				<cell type="href" name="" disabled="${!sampleHasNextPage}" pos="3,3,3,3,l,c" glyph="FA-ANGLE_RIGHT" ref_id="Report-9f6" >
+					<var name="samplePageNumber" value="${( samplePageNumber+1 )}" />
+				</cell>
+			</body>
+		</form>
+	</layout>
+</project>

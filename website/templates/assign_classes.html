@@ -1,0 +1,197 @@
+{% extends "base.html" %} {% block title %}Student Class Assignments {% endblock %} 
+{% block content %}
+
+<style>
+  .form-group.required .col-form-label:after {
+    content: "*";
+    color: red;
+  }
+</style>
+
+<div class="container-fluid mt-4 mb-4 p-2 bg-primary text-white rounded">
+  <h3><span style="font-weight:100">Student Class</span>&nbsp;<span style="font-weight: 700"></span>Assignments</span>
+  </h3>
+</div>
+
+<div class="row g-3" style='background-color: #eee;'>
+
+  <!-- Semester Filter -->
+  <div class="col-md-3 required">
+    <div class="form-floating">
+      <select class="form-select" name=student_semester_filter id=student_semester_filter aria-label="Semester">
+        <option value=-1>All</option>
+        {% for semester in semesters %}
+        <option value={{semester.id}}>{{semester.name}}</option>
+        {% endfor %}
+      </select>
+      <label for="student_semester_filter">Semester</label>
+    </div>
+  </div>
+
+  <!-- Campus Filter -->
+  <div class="col-md-3 required">
+    <div class="form-floating">
+      <select class="form-select" name=student_campus_filter id=student_campus_filter aria-label="Semester">
+        <option value=-1 >All</option>
+        {% for campus in campuses %}
+        <option value={{campus.id}}>{{campus.name}}</option>
+        {% endfor %}
+      </select>
+      <label for="student_campus_filter">Campus</label>
+    </div>
+  </div>
+
+  <!-- Instrument Filter -->
+  <div class="col-md-3 ">
+    <div class="form-floating">
+      <select class="form-select" name=student_instrument_type_filter id=student_instrument_type_filter
+        aria-label="Select Instrument Type">
+        <option value=-1>All</option>
+        {% for type in instrument_types %}
+        <option value="{{type.id}}">{{type.name}}</option>
+        {% endfor %}
+      </select>
+      <label for="student_instrument_type_filter">Instrument</label>
+    </div>
+  </div>
+
+  <!-- Global Filter -->
+  <div class="col-md-3 ">
+    <div class="form-floating">
+      <input type='text' class="form-control" name=global_search id=global_search>
+      <label for=email>Search All</label>
+    </div>
+  </div>
+</div>
+<form method="POST">
+
+  <!-- Table -->
+  <table id=class-assignment-table class='table table-striped col-md-12'>
+    <thead id="table-head">
+      <tr>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Semester</th>
+        <th>Campus</th>
+        <th>Instrument 1</th>
+        <th>Instrument 2</th>
+        <th>Class</th>
+      </tr>
+    </thead>
+    <tbody id="table-body">
+      <!-- Show only one semester at a time -->
+      {% for semester in semesters%}
+        {% for student_semester in semester.student_semesters %}
+        <tr>
+          <td>{{ student_semester.student.first_name }}</td>
+          <td>{{ student_semester.student.last_name }}</td>
+          <td>{{ student_semester.semester.name }}</td>
+          <td>{{ student_semester.campus.name }}</td>
+          <td>{{ student_semester.instrument_type_1.name | default('') }}</td>
+          <td>{{ student_semester.instrument_type_2.name | default('') }}</td>
+          <td>
+            <select 
+              data-student_id="{{ student_semester.student.id }}" 
+              data-initial-value="{% if student_semester.student.classes_enrolled | length >0 %}{{ student_semester.student.classes_enrolled[0].class_id }}{% endif %}" 
+              class="form-select student-class-selector" 
+              id=table_class_selector 
+              aria-label="Select Class">
+              <option>Select</option>
+              {% for class_ in classes %}
+                {% if student_semester.instrument_type_1.id == class_.course.instrument_id  
+                  or student_semester.instrument_type_2.id == class_.course.instrument_id 
+                  or True %}
+                  <option 
+                    {% if student_semester.student.classes_enrolled | length >0 %} 
+                      {% if class_.course.id == student_semester.student.classes_enrolled[0].class_id %}
+                        selected
+                      {% endif %}
+                    {% endif %}
+                    value="{{class_.course.id}}">{{class_.course.name}}
+                  </option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </td>
+        </tr>
+        {% endfor %}
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <br />
+  <button type="submit" class="btn btn-primary col-md-1">Submit</button>
+</form>
+<br />
+
+<h4>ToDo:</h4>
+<ul>
+  <li>Prettify</li>
+</ul>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+  $(document).ready(function () {
+    var table = $('#class-assignment-table').DataTable(
+      {
+        paging: false,
+        scrollY: 200
+      }
+    );
+  });
+
+     
+  // Handle Semester Filter
+  $('#student_semester_filter').change(function () {
+    var semester_id = $(this).value;
+    if(semester_id < 0 ) return;
+    var semester_name = $(this).find("option:selected").text();
+
+    table = $('#class-assignment-table').DataTable()
+    table
+      .columns(2)
+      .search(semester_name)
+      .draw();
+  });
+
+  // Handle Campus Filter
+  $('#student_campus_filter').change(function () {
+    var CAMPUS_COL = 3;
+    var campus_name =''
+    var campus_id = this.value;
+
+    if(campus_id > 0 )  {
+      campus_name = $(this).find("option:selected").text();
+    }
+    $('#class-assignment-table').DataTable()
+      .columns(CAMPUS_COL)
+      .search(campus_name)
+      .draw();
+  });
+
+  // Handle Instrument Filter
+  $('#student_instrument_type_filter').change(function (e) {
+    var INSTRUMENT_COL = 4
+    var instrument_type_name =''
+    var instrument_type_id = this.value;
+    if(instrument_type_id > 0 )  {
+      instrument_type_name = $(this).find("option:selected").text();
+    }
+    $('#class-assignment-table').DataTable()
+      .columns(INSTRUMENT_COL)
+      .search(instrument_type_name)
+      .draw();
+  });
+
+  // Handle Global Search
+  $('#global_search').on( 'keyup', function () {
+    $('#class-assignment-table').DataTable().search(this.value).draw();
+  });
+
+
+</script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+{% endblock %}

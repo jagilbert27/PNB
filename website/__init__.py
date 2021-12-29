@@ -9,6 +9,7 @@ DB_NAME = "PnbAdmin.db"
 def create_app():
     application = Flask(__name__)
     app = application
+    app.config['SQLALCHEMY_ECHO']=True
     app.config['SECRET_KEY'] = 'hjshjhdjah kjshkjdhjs'
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
     db.init_app(app)
