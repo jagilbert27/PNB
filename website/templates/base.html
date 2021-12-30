@@ -8,6 +8,8 @@
   }
 </style>
 
+{% block styles %} {% endblock %}
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -82,7 +84,25 @@
               </ul>
             </div>
           </li>
+          <!-- Class Menu -->
+          <li class="me-2">
+            <div class="btn-group">
+              <a type="button" class="btn btn-outline-primary" href="/classes">Classes</a>
+              <button type="button" class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split"
+                data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="visually-hidden">Toggle Dropdown</span>
+              </button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="/classes">Classes</a></li>
+                <li>
+                  <hr class="dropdown-divider">
+                </li>
+                <li><a class="dropdown-item" href="/classes/assign">Student Classs Assignments</a></li>
+              </ul>
+            </div>
+          </li>
         </ul>
+
         <!-- Right side of menu -->
         <form class="d-flex">
           <a class="btn btn-outline-primary me-2" href="/Fill">DB.Init</a>

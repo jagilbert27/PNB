@@ -1,6 +1,7 @@
 import enum
 import sys
 from flask import Blueprint, render_template, request, flash, jsonify, redirect, url_for
+from flask.json import dumps
 from flask_login import login_required, current_user
 import pandas
 from sqlalchemy.sql.expression import null, true
@@ -236,16 +237,6 @@ def fill():
     db.session.add(Class(id=2, semester_id=1, course_id=2, room_id=2, start_datetime = datetime(2021,10,1,16,30), frequency_days=7, class_count=12)) #Winter 2021, AdvBjo, RM101, Blackburn, 10/1
     # Schedule a class in winter2021, itrmdo, room101 at Blackburn, Starting 10/2/2021 @ 4:30 every week for 3 months
     db.session.add(Class(id=3, semester_id=1, course_id=3, room_id=2, start_datetime = datetime(2021,10,2,16,30), frequency_days=7, class_count=12)) #Winter 2021, AdvBjo, RM101, Blackburn, 10/1
-
-
-    # # ------- Assign Teachers to a class
-    # # Assign MzFrz(3) to the begfig class(1)
-    # db.session.add(ClassTeacher(id=1, person_id=3, class_id=1))  # Frizzle teaches BegFid, 10/1
-    # assert ClassTeacher.query.get(1).teacher.name == 'Ms. Frizzle'
-    # assert ClassTeacher.query.get(1).class_.start_datetime == datetime(2021,10,1,16,30)
-    # assert ClassTeacher.query.get(1).class_.course.name == 'Beginning Fiddle'
-    # # Assign Bill(3) to the AdvBjo class(1)
-    # db.session.add(ClassTeacher(id=3, person_id=4, class_id=2))  # Bill teachs AdvBjo 10/1
 
  
     # Students enrolled in the class
@@ -865,14 +856,6 @@ def assign_classes():
         campuses = Campus.query.all()
         semesters = Semester.query.all()
         classes = Class.query.all()
-
-        print('Hello world!', file=sys.stderr)
-
-        # semester = semesters[0]
-        # student_class_id = semester.student_semesters[0].student.classes_enrolled
-
-        # assert 1==0
-
         return render_template(
             "assign_classes.html", 
             students = students,
@@ -882,51 +865,102 @@ def assign_classes():
             classes = classes,
             user=current_user) 
 
-    # if request.method == 'POST':
+    if request.method == 'POST':
+        dbg = '\n--------------------------------\n'
+        for key in request.form.keys():
+            if key == 'table_class_selector':
+                for value in request.form.getlist(key):
+                    student_semester_id = value.split(',')[0]
+                    course_id =  int(value.split(',')[1])
+                    dbg += f'student_semester_id: {student_semester_id}, '
+                    dbg += f'course_id:{course_id}, '
 
-    #     for student_class_selector in request.form if student_class_selector.class == 'student-class-selector':
+                    # Get the student_semester and change if necessary
+                    student_semester = StudentSemester.query.get(student_semester_id)
+                    student = Student.query.get(student_semester.student_id)
 
-    #         class_student = ClassStudent(
-    #             class_id = student_class_selector.value,
-    #             student_id= student_class_selector['data-student_id']
-    #         )
+                    # delete?
+                    if course_id < 0: 
+                        dbg += 'gonna delete, '
+                        # delete all class_student for student & semester
+                        class_student = ClassStudent.query\
+                            .filter_by(student_id = student.student_id) \
+                            .join(Class)\
+                            .filter_by(semester_id = student_semester_id)\
+                            .first()
+
+                        if class_student:
+                            dbg += f'deleting class_student {class_student.id}, '
+                            db.session.delete(class_student)
+                        else:
+                            dbg += f'nothing to delete, '
+
+                    print(dbg, file=sys.stderr)
+
+                    course = Course.query.get(course_id)
+                    rooms_at_campus = student_semester.campus.rooms
+                    dbg+= f'Student:[{student.id}]{student.first_name}, '
+                    if course:
+                        dbg+= f'course:{course.name}, '
+                    else:
+                        dbg+= f'course:None, '
+
+ 
+
+                    # Does the class already exist?
+                    class_ = Class.query.filter(
+                        (Class.course_id == course_id) & 
+                        (Class.semester_id == student_semester.semester_id) &
+                        (Class.room_id == 1 )).first()
+                        # (Class.room_id == 1 in rooms_at_campus)).first()
+                    
+                    if class_:
+                        dbg += f'class exists: {class_.course.name}, {class_.room.name}, '
+                    else:
+                        dbg += f'class doesn`t exist'
+
+                    # # Create the class if it doesn't exist
+                    # if not class_:
+
+                    #     #find the default room
+                    #     default_room = Room.query.filter(Room.campus_id == student_semester.campus_id).first()
+                    #     if not default_room:
+                    #         default_room = Room(
+                    #             name = 'Unassigned Room',
+                    #             campus_id = student_semester.campus.id)
+                    #         db.session.add(default_room)
+
+                    #     class_ = Class(
+                    #         name = 'proposed',
+                    #         course_id = course_id,
+                    #         semester_id = student_semester.semester_id,
+                    #         room_id = default_room.id #This will be some random room at the right campus
+                    #     )
+                    #     db.session.add(class_)
 
 
-    #     checkout = checkout_from_request(checkout, request)
-    #     db.session.add(checkout)
-    #     try:
-    #         db.session.commit()
-    #     except sqlalchemy.exc.IntegrityError:
-    #         flash(f' {checkout.instrument.type.name} {checkout.instrument.tag} is already checked out to {checkout.student.first_name} {checkout.student.last_name}', category='danger')
-    #         return redirect(url_for('views.checkout_edit'))
+                    # Is the student already signed up for this class?
+                    class_student = ClassStudent.query.filter(
+                        (ClassStudent.student_id == student.id) &
+                        (ClassStudent.class_id   == class_.id)).first()
 
-    #     # Update the instrument record to reflect the checkout status
-    #     instrument = Instrument.query.get(checkout.instrument_id)
-    #     if checkout.checkout_date is not None and checkout.return_date is None:
-    #         instrument.status_id = InstrumentStatuses.CheckedOut.value
-    #     elif checkout.return_date is not None:
-    #         instrument.status_id = InstrumentStatuses.Available.value
-    #     db.session.add(instrument)
-    # instrument = Instrument.query.get_or_404(1)
-    #     instrument.tag = request.form.get('instrument_tag')
-    #     instrument.type_id = request.form.get('instrument_type')
-    #     instrument.size_id = request.form.get('instrument_size')
-    #     instrument.status_id = request.form.get('instrument_status')
-    #     instrument.serial = request.form.get('instrument_serial')
-    #     instrument.brand = request.form.get('instrument_brand')
-    #     instrument.model = request.form.get('instrument_brand')
-    #     instrument.condition_id = request.form.get('instrument_condition')
-    #     instrument.location = request.form.get('instrument_location')
-    #     instrument.est_value = request.form.get('instrument_value')
-    #     db.session.add(instrument)
-    #     db.session.commit()
-    #     flash('Instrument Added!', category='success')
-    #     return redirect(url_for('views.instrument_list'))
-    # instrument_types = InstrumentType.query.all()
-    # instrument_conditions = InstrumentCondition.query.all()
-    # instrument_sizes = InstrumentSize.query.all()
-    # instrument_statuses = InstrumentStatus.query.all()
+                    if class_student:
+                        dbg += f'class_student.id: {class_student.id}, '
+                    else:
+                        dbg += 'class_student does`t exist, '
 
+                    # Assign to this class if not already
+                    if not class_student:
+                        class_student = ClassStudent(
+                            student_id = student.id,
+                            class_id = class_.id)
+                        db.session.add(class_student)
+                        dbg += f'Created class_student:[{class_student}], '
+                        dbg += f'student:[{class_student.student_id}], '
+
+                    print(dbg, file=sys.stderr)
+                    db.session.commit()
+                    return redirect(url_for('views.assign_classes'))
 
 
 

@@ -6,6 +6,10 @@
     content: "*";
     color: red;
   }
+
+  .dataTables_filter{ 
+    display:none;
+  }
 </style>
 
 <div class="container-fluid mt-4 mb-4 p-2 bg-primary text-white rounded">
@@ -94,9 +98,10 @@
               data-student_id="{{ student_semester.student.id }}" 
               data-initial-value="{% if student_semester.student.classes_enrolled | length >0 %}{{ student_semester.student.classes_enrolled[0].class_id }}{% endif %}" 
               class="form-select student-class-selector" 
-              id=table_class_selector 
+              name="table_class_selector"
+              id='table_class_selector_{{student_semester.student.id}}'
               aria-label="Select Class">
-              <option>Select</option>
+              <option value="{{student_semester.id}},-1">Select</option>
               {% for class_ in classes %}
                 {% if student_semester.instrument_type_1.id == class_.course.instrument_id  
                   or student_semester.instrument_type_2.id == class_.course.instrument_id 
@@ -105,9 +110,12 @@
                     {% if student_semester.student.classes_enrolled | length >0 %} 
                       {% if class_.course.id == student_semester.student.classes_enrolled[0].class_id %}
                         selected
+                        value="{{student_semester.id}},{{class_.course.id}},1">
+                        {% else %}
+                        value="{{student_semester.id}},{{class_.course.id}},0">
                       {% endif %}
                     {% endif %}
-                    value="{{class_.course.id}}">{{class_.course.name}}
+                    {{class_.course.name}}
                   </option>
                 {% endif %}
               {% endfor %}
@@ -138,7 +146,7 @@
     var table = $('#class-assignment-table').DataTable(
       {
         paging: false,
-        scrollY: 200
+        scrollY: 200,
       }
     );
   });
