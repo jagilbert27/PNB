@@ -271,7 +271,7 @@ class ClassStudent(db.Model):
     id              = db.Column( db.Integer, primary_key=True )
     class_id        = db.Column( db.ForeignKey('classes.id') ) #
     student_id      = db.Column( db.ForeignKey('students.id') ) #stu attended on this class day
-    class_          = relationship( "Class",           back_populates="students")
+    class_          = relationship( "Class",   back_populates="students")
     student         = relationship( "Student", back_populates="classes_enrolled")
     notes           = db.Column( db.String(150) )
 

@@ -77,8 +77,8 @@
         <th>Last Name</th>
         <th>Semester</th>
         <th>Campus</th>
-        <th>Instrument 1</th>
-        <th>Instrument 2</th>
+        <th>1<sup>st</sup> Choice</th>
+        <th>2<sup>nd</sup> Choice</th>
         <th>Class</th>
       </tr>
     </thead>
@@ -101,24 +101,25 @@
               name="table_class_selector"
               id='table_class_selector_{{student_semester.student.id}}'
               aria-label="Select Class">
-              <option value="{{student_semester.id}},-1">Select</option>
-              {% for class_ in classes %}
-                {% if student_semester.instrument_type_1.id == class_.course.instrument_id  
-                  or student_semester.instrument_type_2.id == class_.course.instrument_id 
-                  or True %}
-                  <option 
-                    {% if student_semester.student.classes_enrolled | length >0 %} 
-                      {% if class_.course.id == student_semester.student.classes_enrolled[0].class_id %}
-                        selected
-                        value="{{student_semester.id}},{{class_.course.id}},1">
-                        {% else %}
-                        value="{{student_semester.id}},{{class_.course.id}},0">
-                      {% endif %}
-                    {% endif %}
-                    {{class_.course.name}}
-                  </option>
+              <option 
+                {% if student_semester.student.classes_enrolled | length %} 
+                  value='{"student_semester_id":{{student_semester.id}},"class_id":-1,"old_class_id":{{student_semester.student.classes_enrolled[0].class_id}}}'
+                {% else %}
+                  value='{"student_semester_id":{{student_semester.id}},"class_id":-1,"old_class_id":-1}'
                 {% endif %}
-              {% endfor %}
+                >~ Select ~</option>
+                {% for class_ in classes %}
+                  {% if student_semester.student.classes_enrolled | length %}
+                    <option
+                      {% if class_.course.id == student_semester.student.classes_enrolled[0].class_id %}selected{%endif%} 
+                      value='{"student_semester_id":{{student_semester.id}},"class_id":{{class_.id}},"old_class_id":{{student_semester.student.classes_enrolled[0].class_id}} }'
+                    >{{ class_.course.name }}</option>
+                  {% else %}
+                    <option
+                      value='{"student_semester_id":{{student_semester.id}},"class_id":{{class_.id}},"old_class_id":-1 }'
+                    >{{ class_.course.name }}</option>
+                  {% endif %}
+                {% endfor %}
             </select>
           </td>
         </tr>
@@ -126,21 +127,28 @@
       {% endfor %}
     </tbody>
   </table>
-
-  <br />
-  <button type="submit" class="btn btn-primary col-md-1">Submit</button>
 </form>
-<br />
+<br/>
+<div class="row g-3" >
+  <div style= 'border:1px solid #ccc;' class="col-md-3 ">
+    <div class='tally' id=class_-1>0</div>
+    <div>Unassigned</div>
+  </div>  
+  {% for class_ in classes %}
+  <div style= 'border:1px solid #ccc;' class="col-md-3 ">
+    <div class='tally' id=class_{{class_.id}}>0</div>
+    <div>{{class_.room.campus.name}}<br/>{{class_.course.name}}</div>
+  </div>
+  {% endfor%}
+</div>
 
 <h4>ToDo:</h4>
 <ul>
   <li>Prettify</li>
 </ul>
-
 {% endblock %}
 
-{% block scripts %}
-
+{% block scripts %} 
 <script>
   $(document).ready(function () {
     var table = $('#class-assignment-table').DataTable(
@@ -149,9 +157,31 @@
         scrollY: 200,
       }
     );
+    tally();
   });
 
-     
+  // handle class value change
+  $('.student-class-selector').change(function () {
+    tally();
+  });
+
+  function tally(){
+    // clearall
+    $('.tally').text(0);
+    $('.student-class-selector').each(function() {
+      v = $(this).val();
+      j = JSON.parse(v);
+      class_id = j.class_id;
+      div = $('#class_'+class_id);
+      class_count=parseInt(div.html())
+      class_count +=1;
+      div.html(class_count);
+    });
+  }
+
+  
+
+
   // Handle Semester Filter
   $('#student_semester_filter').change(function () {
     var semester_id = $(this).value;
@@ -199,7 +229,7 @@
     $('#class-assignment-table').DataTable().search(this.value).draw();
   });
 
-
 </script>
+
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
 {% endblock %}
