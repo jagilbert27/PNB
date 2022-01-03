@@ -31,6 +31,7 @@
 			<column name="teacher_id" type="integer" jt="4" />
 			<column name="present" type="boolean" jt="-7" />
 			<column name="notes" type="varchar" length="150" jt="12" />
+			<column name="role_id" type="integer" jt="4" />
 			<index name="PrimaryKey" unique="PRIMARY_KEY" >
 				<column name="id" />
 			</index>
@@ -40,6 +41,9 @@
 			<fk name="FK_class_day_teachers persons" to_schema="Default" to_table="persons" >
 				<fk_column name="teacher_id" pk="id" />
 			</fk>
+			<fk name="FK_class_day_teachers person_role" to_schema="Default" to_table="person_role" >
+				<fk_column name="role_id" pk="id" />
+			</fk>
 		</table>
 		<table name="class_days" spec="" >
 			<column name="id" type="integer" jt="4" mandatory="y" />
@@ -48,6 +52,7 @@
 			<column name="room_id" type="integer" jt="4" />
 			<column name="start_datetime" type="datetime" jt="93" />
 			<column name="notes" type="varchar" length="1000" jt="12" />
+			<column name="period_id" type="integer" jt="4" />
 			<index name="PrimaryKey" unique="PRIMARY_KEY" >
 				<column name="id" />
 			</index>
@@ -56,6 +61,9 @@
 			</fk>
 			<fk name="FK_class_days rooms" to_schema="Default" to_table="rooms" >
 				<fk_column name="room_id" pk="id" />
+			</fk>
+			<fk name="FK_class_days periods" to_schema="Default" to_table="periods" >
+				<fk_column name="period_id" pk="id" />
 			</fk>
 		</table>
 		<table name="classes" spec="" >
@@ -101,6 +109,7 @@
 			<column name="class_id" type="integer" jt="4" />
 			<column name="person_id" type="integer" jt="4" />
 			<column name="notes" type="varchar" length="150" jt="12" />
+			<column name="role_id" type="integer" jt="4" />
 			<index name="PrimaryKey" unique="PRIMARY_KEY" >
 				<column name="id" />
 			</index>
@@ -109,6 +118,9 @@
 			</fk>
 			<fk name="FK_classes_teachers persons" to_schema="Default" to_table="persons" >
 				<fk_column name="person_id" pk="id" />
+			</fk>
+			<fk name="FK_classes_teachers person_role" to_schema="Default" to_table="person_role" >
+				<fk_column name="role_id" pk="id" />
 			</fk>
 		</table>
 		<table name="courses" spec="" >
@@ -207,6 +219,20 @@
 				<fk_column name="user_id" pk="id" />
 			</fk>
 		</table>
+		<table name="periods" spec="" >
+			<column name="id" type="integer" jt="4" mandatory="y" />
+			<column name="name" type="varchar" length="50" jt="12" />
+			<column name="campus_id" type="integer" jt="4" />
+			<column name="start_time" type="time" jt="92" />
+			<column name="end_time" type="time" jt="92" />
+			<column name="notes" type="varchar" length="500" jt="12" />
+			<index name="PrimaryKey" unique="PRIMARY_KEY" >
+				<column name="id" />
+			</index>
+			<fk name="FK_periods campuses" to_schema="Default" to_table="campuses" >
+				<fk_column name="campus_id" pk="id" />
+			</fk>
+		</table>
 		<table name="person_role" spec="" >
 			<column name="id" type="integer" jt="4" mandatory="y" />
 			<column name="name" type="varchar" length="150" jt="12" />
@@ -302,9 +328,11 @@
 			</index>
 			<fk name="FK_student_semester students" to_schema="Default" to_table="students" >
 				<fk_column name="student_id" pk="id" />
+				<comment><![CDATA[students]]></comment>
 			</fk>
 			<fk name="FK_student_semester semesters" to_schema="Default" to_table="semesters" >
 				<fk_column name="semester_id" pk="id" />
+				<comment><![CDATA[semesters]]></comment>
 			</fk>
 			<fk name="FK_student_semester campuses" to_schema="Default" to_table="campuses" >
 				<fk_column name="campus_id" pk="id" />
@@ -403,20 +431,23 @@
 		<entity schema="Default" name="class_days" color="D1BEF4" x="512" y="560" />
 		<entity schema="Default" name="classes" color="F4DDBE" x="512" y="784" />
 		<entity schema="Default" name="classes_students" color="F4DDBE" x="256" y="368" />
-		<entity schema="Default" name="classes_teachers" color="F4DDBE" x="816" y="368" />
-		<entity schema="Default" name="courses" color="BEBEF4" x="736" y="864" />
-		<entity schema="Default" name="persons" color="F4DDBE" x="752" y="176" />
+		<entity schema="Default" name="classes_teachers" color="F4DDBE" x="992" y="352" />
+		<entity schema="Default" name="courses" color="BEBEF4" x="896" y="864" />
+		<entity schema="Default" name="periods" color="3986C1" x="768" y="624" />
+		<entity schema="Default" name="person_role" color="3986C1" x="784" y="528" />
+		<entity schema="Default" name="persons" color="F4DDBE" x="720" y="176" />
+		<entity schema="Default" name="persons_roles" color="3986C1" x="784" y="368" />
 		<entity schema="Default" name="semesters" color="BEBEF4" x="272" y="848" />
-		<entity schema="Default" name="student_semester" color="BEBEF4" x="48" y="368" />
+		<entity schema="Default" name="student_semester" color="BEBEF4" x="48" y="368" >
+			<callout x="208" y="304" pointer="SV" on="FK_student_semester students" />
+			<callout x="208" y="768" pointer="NV" on="FK_student_semester semesters" />
+		</entity>
 		<entity schema="Default" name="students" color="BED3F4" x="336" y="80" />
 		<group name="students" color="ECF0F7" >
 			<entity schema="Default" name="students" />
 		</group>
 		<script name="SQL_Editor" id="Editor-2057" language="SQL" >
-			<string><![CDATA[select * from semesters
-join  student_semester st_se on st_se.semester_id = semesters.id
-where semesters.id = 1
-]]></string>
+			<string><![CDATA[delete from classes where id > 3]]></string>
 		</script>
 	</layout>
 	<layout name="~Layout with Sample Tools" id="Layout-144d" show_column_type="y" show_relation="columns" >
@@ -495,28 +526,28 @@ FROM
 				<cell type="chart" name="Line" template="Line" pos="0,1,4,1,l,c" >
 					<form_script type="DataSource" language="SQL" >
 						<var name="id" type="4" />
-						<var name="name" />
+						<var name="name" type="-1" />
 						<var name="semester_id" type="4" />
 						<var name="course_id" type="4" />
 						<var name="room_id" type="4" />
 						<var name="start_datetime" type="93" />
 						<var name="frequency_days" type="4" />
 						<var name="class_count" type="4" />
-						<var name="notes" />
+						<var name="notes" type="-1" />
 						<script ><![CDATA[SELECT * FROM classes]]></script>
 					</form_script>
 				</cell>
 				<tableview name="sample" template="Table" pos="0,2,4,2,f,f" layout="{{-2,-2,-2,-2,-2,-2,-2},{-2,-2}}" scroll="n" html="n" header_rows="1" >
 					<form_script type="DataSource" language="SQL" >
 						<var name="id" type="4" />
-						<var name="name" />
+						<var name="name" type="-1" />
 						<var name="semester_id" type="4" />
 						<var name="course_id" type="4" />
 						<var name="room_id" type="4" />
 						<var name="start_datetime" type="93" />
 						<var name="frequency_days" type="4" />
 						<var name="class_count" type="4" />
-						<var name="notes" />
+						<var name="notes" type="-1" />
 						<script ><![CDATA[SELECT * FROM classes]]></script>
 					</form_script>
 					<cell type="label" name="id" pos="0,0,0,0,c,c" />

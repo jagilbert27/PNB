@@ -1,3 +1,4 @@
+from os import name
 from sqlalchemy.sql.elements import RollbackToSavepointClause
 from . import db
 from flask_login import UserMixin
@@ -254,10 +255,12 @@ class Class(db.Model):
     semester_id         = db.Column( db.ForeignKey('semesters.id'))# 1:1
     course_id           = db.Column( db.ForeignKey('courses.id'))
     room_id             = db.Column( db.ForeignKey('rooms.id'))
+    period_id           = db.Column( db.ForeignKey('periods.id'))
     semester            = relationship("Semester",    back_populates="classes")
     course              = relationship("Course",      back_populates="classes")
     room                = relationship("Room",        back_populates="classes")
     class_days          = relationship("ClassDay",    back_populates="class_")
+    period              = relationship("Period",      back_populates="classes")
     teachers            = relationship("ClassTeacher",back_populates="class_")
     students            = relationship("ClassStudent",back_populates="class_")
     start_datetime      = db.Column( db.DateTime)
@@ -329,3 +332,16 @@ class ClassDayTeacher(db.Model):
     role            = relationship( "PersonRole")
     present         = db.Column( db.Boolean )
     notes           = db.Column( db.String(150) )
+
+class Period(db.Model):
+    __tablename__       = 'periods'
+    id                  = db.Column( db.Integer, primary_key=True )
+    name                = db.Column( db.String(50) )                    #1st Period
+    campus_id           = db.Column( db.ForeignKey('campuses.id') )     #\
+    semester_id         = db.Column( db.ForeignKey('semesters.id'))
+    campus              = relationship("Campus")
+    classes             = relationship("Class",back_populates="period") 
+    semester            = relationship("Semester")
+    start_time          = db.Column( db.Time)
+    end_time            = db.Column( db.Time)
+    notes               = db.Column( db.String(500) )
